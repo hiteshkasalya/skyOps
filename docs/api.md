@@ -36,11 +36,23 @@ All non-2xx error responses follow a uniform structured JSON format:
 ```
 
 Common status codes:
-- `400 Bad Request`: Validation failure or malformed payload.
+- `400 Bad Request`: Business rule validation failure or malformed payload.
 - `401 Unauthorized`: Missing or invalid authentication token.
 - `403 Forbidden`: Insufficient permissions for requested action.
 - `404 Not Found`: Target resource does not exist.
 - `409 Conflict`: Operational or resource state conflict.
+- `422 Unprocessable Entity`: FastAPI/Pydantic request validation error, formatted as:
+  ```json
+  {
+    "detail": [
+      {
+        "loc": ["body", "runway_identifier"],
+        "msg": "field required",
+        "type": "missing"
+      }
+    ]
+  }
+  ```
 - `500 Internal Server Error`: Unhandled server-side exception.
 
 ---
