@@ -171,6 +171,96 @@
           "closure_windows": []
         }
       ]
+    },
+    {
+      "airport_code": "HYD",
+      "icao_code": "VOHS",
+      "name": "Rajiv Gandhi International Airport",
+      "city": "Hyderabad",
+      "country": "India",
+      "timezone": "Asia/Kolkata",
+      "terminals": ["T1", "T2"],
+      "runways": [
+        {
+          "runway_id": "09L/27R",
+          "airport_code": "HYD",
+          "length_meters": 4260,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "runway_id": "09R/27L",
+          "airport_code": "HYD",
+          "length_meters": 3707,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ],
+      "gates": [
+        {
+          "gate_id": "08",
+          "airport_code": "HYD",
+          "terminal": "T1",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "18",
+          "airport_code": "HYD",
+          "terminal": "T2",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ]
+    },
+    {
+      "airport_code": "CCU",
+      "icao_code": "VECC",
+      "name": "Netaji Subhash Chandra Bose International Airport",
+      "city": "Kolkata",
+      "country": "India",
+      "timezone": "Asia/Kolkata",
+      "terminals": ["T1", "T2"],
+      "runways": [
+        {
+          "runway_id": "01R/19L",
+          "airport_code": "CCU",
+          "length_meters": 3627,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "runway_id": "01L/19R",
+          "airport_code": "CCU",
+          "length_meters": 2790,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ],
+      "gates": [
+        {
+          "gate_id": "06",
+          "airport_code": "CCU",
+          "terminal": "T1",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "15",
+          "airport_code": "CCU",
+          "terminal": "T2",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ]
     }
   ],
   "turnaround_requirements": [

@@ -112,7 +112,7 @@ To maintain transparent tracking across teams, the current development status of
 | **Airport Resources & Schedule Models** | **Implemented** | Airport topology, runway closures, gate compatibility, and turnaround validation |
 | **Database Models & Session** | **Planned / In Development** | SQLAlchemy models for Airport, Gate, Flight |
 | **Conflict Detection Engine** | **Implemented** | Deterministic detector for runway closures, runway overlaps, gate contention, and turnaround breaches |
-| **Runway-Closure Simulator** | **Planned** | Simulation engine and recovery proposals API |
+| **Runway-Closure Simulator** | **Implemented** | End-to-end simulation on isolated schedule copies with deterministic rule-based recovery proposals and before/after metric deltas (`POST /api/v1/simulation/run`) |
 | **Delay Propagation Modeling** | **Planned** | Cascade delay tree calculation |
 | **OR-Tools Gate Optimization** | **Planned** | Constraint solver integration |
 | **ML Delay Prediction** | **Planned** | Historical training & inference service |

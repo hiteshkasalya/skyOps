@@ -71,7 +71,8 @@ The following matrix documents the exact development status of all defined API c
 | `/api/v1/flights/{id}` | `GET` | Full telemetry and turnaround details for a flight | **Implemented** |
 | `/api/v1/conflicts` | `GET` | Active gate, runway closure, reservation, and turnaround conflicts | **Implemented** |
 | `/api/v1/schedules/conflicts` | `GET` | Alias for active operational schedule conflicts | **Implemented** |
-| `/api/v1/simulations/runway-closure` | `POST` | Simulate runway closure impact & recovery proposals | **Planned** |
+| `/api/v1/simulation/run` | `POST` | Runway closure disruption simulation & recovery proposals | **Implemented** |
+| `/api/v1/simulations/runway-closure` | `POST` | Alias endpoint for runway closure disruption simulation | **Implemented** |
 | `/api/v1/delays/propagate` | `POST` | Model downstream cascade delays | **Planned** |
 | `/api/v1/optimization/solve-gates` | `POST` | OR-Tools constraint gate re-allocation | **Planned** |
 | `/api/v1/predictions/delay` | `POST` | ML flight delay probability and duration | **Planned** |
@@ -440,71 +441,132 @@ The following matrix documents the exact development status of all defined API c
 
 ## 8. Disruption Simulation APIs
 
-### `POST /api/v1/simulations/runway-closure` (Runway Closure Simulation)
-- **Status**: Planned
-- **Description**: Simulate operational impact and generate tactical recovery proposals when an airport runway is temporarily closed (due to disabled aircraft, emergency maintenance, or weather).
-- **Request Body**:
+### `POST /api/v1/simulation/run` (and `POST /api/v1/simulations/runway-closure`)
+- **Status**: Implemented
+- **Description**: Simulate operational disruption impact and generate tactical recovery proposals when an airport runway is temporarily closed (due to disabled aircraft, emergency maintenance, inspection, or weather). The simulation executes strictly on an isolated clone of the current schedule and resource state, **never modifying live operational schedules**.
+- **Algorithmic Recovery Strategy**: Deterministic rule-based heuristic re-sequencing and alternate runway reallocation with wake-vortex slot separation. Clearly discloses limitations (OR-Tools CP-SAT solver integration planned for Phase 3).
+- **Request Body Parameters**:
+  - `runway_identifier` (string, required, alias: `runway_id`): Closed runway identifier (e.g. `10/28`).
+  - `closure_start` (ISO 8601 UTC string, required): Start timestamp of the runway closure.
+  - `closure_end` (ISO 8601 UTC string, required): End timestamp of the closure (validated: `closure_end > closure_start`).
+  - `airport_code` (string, optional): 3-letter IATA airport code (e.g. `DEL`). Inferred automatically if omitted and runway identifier is unique across hubs.
+  - `reason` (string, optional, default: `"RUNWAY_MAINTENANCE_CLOSURE"`): Operational cause of runway closure.
+  - `affected_flight_ids` (array of strings, optional): Explicit subset of flight IDs to evaluate.
+- **Request Body Example**:
   ```json
   {
     "airport_code": "DEL",
     "runway_identifier": "10/28",
     "closure_start": "2026-10-12T09:00:00Z",
-    "closure_end": "2026-10-12T11:30:00Z",
-    "reason": "EMERGENCY_INSPECTION_FOD"
+    "closure_end": "2026-10-12T10:30:00Z",
+    "reason": "EMERGENCY_FOD_INSPECTION"
   }
   ```
 - **Response `200 OK`**:
   ```json
   {
-    "simulation_id": "sim-runway-del-1028-20261012",
+    "simulation_id": "sim-del-1028-20261012090104",
     "airport_code": "DEL",
     "runway_identifier": "10/28",
     "closure_window": {
-      "start": "2026-10-12T09:00:00Z",
-      "end": "2026-10-12T11:30:00Z",
-      "duration_minutes": 150
+      "start_time": "2026-10-12T09:00:00Z",
+      "end_time": "2026-10-12T10:30:00Z"
     },
-    "impact_summary": {
-      "capacity_reduction_percentage": 28.5,
-      "total_impacted_flights": 18,
-      "diverted_flights_count": 2,
-      "ground_delayed_departures_count": 12,
-      "holding_arrivals_count": 4,
-      "total_projected_delay_minutes": 495
+    "reason": "EMERGENCY_FOD_INSPECTION",
+    "is_feasible": true,
+    "recovery_strategy": "RULE_BASED_HEURISTIC",
+    "baseline_metrics": {
+      "total_flights": 12,
+      "conflicts_count": 7,
+      "total_delay_minutes": 175
+    },
+    "post_disruption_metrics": {
+      "impacted_flights_count": 2,
+      "conflicts_count": 7,
+      "total_projected_delay_minutes": 265
+    },
+    "recovery_metrics": {
+      "resolved_conflicts_count": 2,
+      "remaining_conflicts_count": 5,
+      "net_delay_added_minutes": 0
     },
     "affected_flights": [
       {
-        "flight_id": "6E-6112-DEL-HYD",
-        "action_required": "REROUTE_RUNWAY",
+        "flight_id": "6E-103-DEL-BLR-20261012",
+        "flight_number": "6E 103",
+        "movement_type": "DEPARTURE",
         "original_runway": "10/28",
-        "assigned_alternate_runway": "09/27",
-        "projected_delay_minutes": 20
+        "proposed_runway": "11/29",
+        "scheduled_time": "2026-10-12T10:00:00Z",
+        "action_required": "REROUTE_RUNWAY",
+        "projected_delay_minutes": 0
       },
       {
-        "flight_id": "6E-344-CCU-DEL",
-        "action_required": "HOLD_OR_DIVERT",
-        "holding_time_minutes": 25,
-        "fuel_status": "SUFFICIENT"
+        "flight_id": "6E-6112-DEL-HYD-20261012",
+        "flight_number": "6E 6112",
+        "movement_type": "DEPARTURE",
+        "original_runway": "10/28",
+        "proposed_runway": "11/29",
+        "scheduled_time": "2026-10-12T09:15:00Z",
+        "action_required": "REROUTE_RUNWAY",
+        "projected_delay_minutes": 0
       }
     ],
     "recovery_proposals": [
       {
         "proposal_id": "prop-1",
-        "title": "Re-sequence Departures to Runway 09/27",
-        "action_type": "RUNWAY_REDISTRIBUTION",
-        "description": "Shift 8 narrow-body departures from closed Runway 10/28 to Runway 09/27 with 3-minute wake turbulence separation.",
-        "estimated_delay_mitigation_minutes": 140
+        "flight_id": "6E-103-DEL-BLR-20261012",
+        "action_type": "RUNWAY_REALLOCATION",
+        "title": "Reassign Departure to Runway 11/29",
+        "description": "Re-sequence flight 6E 103 from closed Runway 10/28 to alternate Runway 11/29 with 0m slot adjustment.",
+        "original_runway": "10/28",
+        "proposed_runway": "11/29",
+        "original_time": "2026-10-12T10:00:00Z",
+        "proposed_time": "2026-10-12T10:00:00Z",
+        "delay_added_minutes": 0,
+        "delay_mitigated_minutes": 45
       },
       {
         "proposal_id": "prop-2",
-        "title": "Ground Delay Program (GDP) for Short-Haul Inbounds",
-        "action_type": "ORIGIN_GROUND_HOLD",
-        "description": "Issue ground stops at origin for BOM and JAI departures bound for DEL to prevent airborne holding stacks.",
-        "estimated_delay_mitigation_minutes": 210
+        "flight_id": "6E-6112-DEL-HYD-20261012",
+        "action_type": "RUNWAY_REALLOCATION",
+        "title": "Reassign Departure to Runway 11/29",
+        "description": "Re-sequence flight 6E 6112 from closed Runway 10/28 to alternate Runway 11/29 with 0m slot adjustment.",
+        "original_runway": "10/28",
+        "proposed_runway": "11/29",
+        "original_time": "2026-10-12T09:15:00Z",
+        "proposed_time": "2026-10-12T09:15:00Z",
+        "delay_added_minutes": 0,
+        "delay_mitigated_minutes": 45
       }
-    ]
+    ],
+    "remaining_conflicts": [
+      {
+        "conflict_id": "gate-occupancy-conflict-22fb60c79f",
+        "type": "GATE_OCCUPANCY_CONFLICT",
+        "severity": "HIGH",
+        "airport_code": "DEL",
+        "resource_type": "GATE",
+        "resource_id": "Gate 42",
+        "interval": {
+          "start_time": "2026-10-12T07:50:00Z",
+          "end_time": "2026-10-12T08:00:00Z"
+        },
+        "affected_flights": [
+          "6E-204-DEL-BOM-20261012",
+          "6E-5032-DEL-BLR-20261012"
+        ],
+        "explanation": "Gate double-booking contention on Gate 42 at DEL between flights 6E-204-DEL-BOM-20261012 and 6E-5032-DEL-BLR-20261012 overlapping from 07:50 to 08:00 UTC.",
+        "detected_at": "2026-10-12T09:01:04Z"
+      }
+    ],
+    "limitations_notice": "Deterministic rule-based heuristic recovery proposal. Does not guarantee mathematical optimality. Constraint programming (OR-Tools) solver integration planned for Phase 3."
   }
   ```
+- **Error Responses**:
+  - `400 Bad Request`: Ambiguous runway without specified `airport_code` or business rule validation error.
+  - `404 Not Found`: Runway or airport not found in resource topology.
+  - `422 Unprocessable Content`: `closure_end <= closure_start` or missing required fields.
 
 ---
 
