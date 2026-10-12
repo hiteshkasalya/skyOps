@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { DEMO_FLIGHTS, DEMO_CONFLICTS } from '../src/data/demoFixtures';
 
 describe('SkyOps Operational Metrics Calculations', () => {
-  it('correctly calculates total flights count', () => {
-    expect(DEMO_FLIGHTS.length).toBe(8);
+  it('correctly calculates total benchmark flights count', () => {
+    expect(DEMO_FLIGHTS.length).toBe(12);
   });
 
   it('correctly calculates delayed flights and average delay', () => {
@@ -28,7 +28,7 @@ describe('SkyOps Operational Metrics Calculations', () => {
   it('flags gate conflict overlap accurately', () => {
     const gateConflict = DEMO_CONFLICTS.find(c => c.type === 'GATE_OCCUPANCY_OVERLAP');
     expect(gateConflict).toBeDefined();
-    expect(gateConflict?.conflicting_flight_ids).toContain('6E-204-DEL-BOM');
-    expect(gateConflict?.conflicting_flight_ids).toContain('6E-5032-DEL-BLR');
+    expect(gateConflict?.conflicting_flight_ids).toContain('6E-204-DEL-BOM-20261012');
+    expect(gateConflict?.conflicting_flight_ids).toContain('6E-5032-DEL-BLR-20261012');
   });
 });

@@ -7,8 +7,8 @@ import { ActiveConflictsBanner } from '../components/ActiveConflictsBanner';
 import { FlightTable } from '../components/FlightTable';
 import { FlightDetailModal } from '../components/FlightDetailModal';
 import { DataSourceBadge } from '../components/DataSourceBadge';
-import { getFlights, getConflicts, getHealth } from '../services/apiClient';
-import { Flight, Conflict, DataSourceOrigin, HealthStatus } from '../types/api';
+import { getFlights, getConflicts, getHealth, API_BASE_URL } from '../services/apiClient';
+import { Flight, Conflict, DataSourceOrigin, HealthStatus, ApiConnectionStatus } from '../types/api';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -19,6 +19,8 @@ import {
   Shield,
   Layers,
   Sparkles,
+  Database,
+  Radio,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -31,35 +33,35 @@ export default function DashboardPage() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dataOrigin, setDataOrigin] = useState<DataSourceOrigin>('DEMO_FIXTURE');
+  const [connectionStatus, setConnectionStatus] = useState<ApiConnectionStatus>('OFFLINE_BENCHMARK');
+  const [apiErrorMessage, setApiErrorMessage] = useState<string | undefined>();
+  const [endpointUrl, setEndpointUrl] = useState<string>(`${API_BASE_URL}/flights`);
 
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
     try {
       const airportParam = currentAirport === 'ALL' ? undefined : currentAirport;
+      const clientMode = dataSourceMode === 'mock_only' ? 'benchmark_only' : dataSourceMode;
 
       const [flightRes, conflictRes, healthRes] = await Promise.all([
-        getFlights({ origin: airportParam }, dataSourceMode),
-        getConflicts(airportParam, dataSourceMode),
-        getHealth(dataSourceMode),
+        getFlights({ origin: airportParam }, clientMode),
+        getConflicts(airportParam),
+        getHealth(),
       ]);
 
-      if (flightRes.error) {
-        setError(flightRes.error);
-      } else {
-        setFlights(flightRes.data);
-        setDataOrigin(flightRes.meta.source);
-      }
+      setFlights(flightRes.data);
+      setConnectionStatus(flightRes.status);
+      setEndpointUrl(flightRes.endpointUrl);
+      setApiErrorMessage(flightRes.errorMessage);
 
-      setConflicts(conflictRes.data);
-      setHealth(healthRes.data);
+      setConflicts(conflictRes);
+      setHealth(healthRes);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to retrieve airport telemetry';
-      setError(msg);
+      const msg = err instanceof Error ? err.message : 'Telemetry synchronization failed';
+      setApiErrorMessage(msg);
+      setConnectionStatus('NETWORK_ERROR');
     } finally {
       setIsLoading(false);
     }
@@ -76,20 +78,23 @@ export default function DashboardPage() {
     }
   };
 
+  const currentDataOrigin: DataSourceOrigin =
+    connectionStatus === 'CONNECTED_LIVE' ? 'LIVE' : 'HISTORICAL';
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Navigation & Status Header */}
+      {/* Top Header */}
       <Header
         currentAirport={currentAirport}
         onSelectAirport={setCurrentAirport}
-        dataOrigin={dataOrigin}
+        dataOrigin={currentDataOrigin}
         dataSourceMode={dataSourceMode}
         onSelectDataMode={setDataSourceMode}
         onRefresh={fetchData}
         isLoading={isLoading}
       />
 
-      {/* Main Container */}
+      {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Navigation Tabs */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -146,7 +151,7 @@ export default function DashboardPage() {
           </nav>
 
           <div className="hidden lg:flex items-center gap-2 text-xs text-slate-400">
-            <span>Operational Mode:</span>
+            <span>Operational Hub:</span>
             <span className="font-semibold text-slate-300">
               {currentAirport === 'ALL' ? 'Multi-Hub Aggregator' : `${currentAirport} Hub Operations`}
             </span>
@@ -156,28 +161,29 @@ export default function DashboardPage() {
         {/* Tab 1: Operations Dashboard */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* KPI Summary Cards */}
-            <SummaryCards flights={flights} conflicts={conflicts} dataOrigin={dataOrigin} />
+            {/* KPI Cards */}
+            <SummaryCards flights={flights} conflicts={conflicts} dataOrigin={currentDataOrigin} />
 
-            {/* Active Resource Conflicts Banner */}
+            {/* Active Conflicts Alert Banner */}
             <ActiveConflictsBanner
               conflicts={conflicts}
               onSelectConflictFlight={handleSelectConflictFlight}
             />
 
-            {/* Flight Operations Table */}
+            {/* Connected Flight Table */}
             <FlightTable
               flights={flights}
               isLoading={isLoading}
-              error={error}
+              connectionStatus={connectionStatus}
+              errorMessage={apiErrorMessage}
+              endpointUrl={endpointUrl}
               onRetry={fetchData}
               onSelectFlight={(flight) => setSelectedFlight(flight)}
-              dataOrigin={dataOrigin}
             />
           </div>
         )}
 
-        {/* Tab 2: Conflicts & Bottlenecks View */}
+        {/* Tab 2: Conflicts View */}
         {activeTab === 'conflicts' && (
           <div className="space-y-6">
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
@@ -186,7 +192,7 @@ export default function DashboardPage() {
                 Airport Spatial & Temporal Conflict Registry
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Spatial-temporal overlaps flagged by the conflict engine where turnaround durations exceed allocated gate occupancy windows or runway separation minimums.
+                Resource overlaps flagged when turnaround milestones breach assigned gate occupancy windows or runway separation limits.
               </p>
             </div>
 
@@ -198,15 +204,16 @@ export default function DashboardPage() {
             <FlightTable
               flights={flights.filter((f) => f.status === 'DELAYED' || f.delay_minutes > 0)}
               isLoading={isLoading}
-              error={error}
+              connectionStatus={connectionStatus}
+              errorMessage={apiErrorMessage}
+              endpointUrl={endpointUrl}
               onRetry={fetchData}
               onSelectFlight={(flight) => setSelectedFlight(flight)}
-              dataOrigin={dataOrigin}
             />
           </div>
         )}
 
-        {/* Tab 3: Disruption Simulator Preview */}
+        {/* Tab 3: Disruption Simulator */}
         {activeTab === 'disruption' && (
           <div className="space-y-6">
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
@@ -218,7 +225,7 @@ export default function DashboardPage() {
                   <div>
                     <h2 className="text-base font-bold text-white">Runway Closure & Tactical Recovery Simulator</h2>
                     <p className="text-xs text-slate-400">
-                      Evaluates operational impact when airport runways close due to disabled aircraft or maintenance (POST /api/v1/simulations/runway-closure).
+                      Evaluates operational impact when airport runways close due to FOD or maintenance (POST /api/v1/simulations/runway-closure).
                     </p>
                   </div>
                 </div>
@@ -247,15 +254,16 @@ export default function DashboardPage() {
             <FlightTable
               flights={flights}
               isLoading={isLoading}
-              error={error}
+              connectionStatus={connectionStatus}
+              errorMessage={apiErrorMessage}
+              endpointUrl={endpointUrl}
               onRetry={fetchData}
               onSelectFlight={(flight) => setSelectedFlight(flight)}
-              dataOrigin={dataOrigin}
             />
           </div>
         )}
 
-        {/* Tab 4: API Contracts View */}
+        {/* Tab 4: API Contracts */}
         {activeTab === 'contracts' && (
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
@@ -275,45 +283,45 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
               <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                <span className="text-slate-400 font-bold block">Implemented Endpoints</span>
+                <span className="text-slate-400 font-bold block">Documented Endpoints (docs/api.md)</span>
                 <div className="space-y-1 text-slate-300">
                   <div className="flex justify-between">
-                    <span>GET /api/v1/health</span>
-                    <span className="text-emerald-400">Contract Ready</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>GET /api/v1/airports</span>
-                    <span className="text-emerald-400">Contract Ready</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span>GET /api/v1/flights</span>
-                    <span className="text-emerald-400">Contract Ready</span>
+                    <span className="text-emerald-400">Connected Client Ready</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>GET /api/v1/health</span>
+                    <span className="text-emerald-400">Schema Aligned</span>
                   </div>
                   <div className="flex justify-between">
                     <span>GET /api/v1/conflicts</span>
-                    <span className="text-emerald-400">Contract Ready</span>
+                    <span className="text-emerald-400">Schema Aligned</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>GET /api/v1/airports</span>
+                    <span className="text-emerald-400">Schema Aligned</span>
                   </div>
                 </div>
               </div>
 
               <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                <span className="text-slate-400 font-bold block">Future Integration Endpoints</span>
+                <span className="text-slate-400 font-bold block">Dataset & Schema Provenance</span>
                 <div className="space-y-1 text-slate-300">
                   <div className="flex justify-between">
-                    <span>POST /api/v1/simulations/runway-closure</span>
-                    <span className="text-sky-400">In Design</span>
+                    <span>Dataset File</span>
+                    <span className="text-sky-300">backend/data/synthetic_...csv</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>POST /api/v1/optimization/solve-gates</span>
-                    <span className="text-sky-400">In Design</span>
+                    <span>Pydantic Models</span>
+                    <span className="text-sky-300">backend/app/schemas/flight.py</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>POST /api/v1/copilot/chat</span>
-                    <span className="text-sky-400">In Design</span>
+                    <span>Record Types</span>
+                    <span className="text-amber-300">HISTORICAL vs LIVE_TRACKING</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>WS /ws/v1/live-ops</span>
-                    <span className="text-sky-400">In Design</span>
+                    <span>Airborne Assumption</span>
+                    <span className="text-emerald-400">Disabled on Historical</span>
                   </div>
                 </div>
               </div>
@@ -322,7 +330,7 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {/* Flight Detail Inspection Modal */}
+      {/* Flight Detail Modal */}
       <FlightDetailModal
         flight={selectedFlight}
         onClose={() => setSelectedFlight(null)}
@@ -339,9 +347,15 @@ export default function DashboardPage() {
             <span className="text-slate-400">IndiGo Hub Telemetry Demo</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                connectionStatus === 'CONNECTED_LIVE' ? 'bg-emerald-500' : 'bg-amber-500'
+              }`}
+            />
             <span className="text-slate-400">
-              {health?.database || 'Local Data Provider Nominal'}
+              {connectionStatus === 'CONNECTED_LIVE'
+                ? 'FastAPI Live Telemetry Connected'
+                : 'Benchmark Dataset Active (FastAPI Server Offline)'}
             </span>
           </div>
         </div>

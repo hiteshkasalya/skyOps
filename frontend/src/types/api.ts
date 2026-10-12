@@ -1,16 +1,19 @@
 /**
  * SkyOps Authoritative API & Domain Types
- * Strictly conforms to docs/api.md and docs/architecture.md contracts.
+ * Strictly conforms to docs/api.md, docs/architecture.md, and backend/app/schemas/flight.py
  */
 
 export type FlightStatus =
-  | 'ON_TIME'
-  | 'DELAYED'
+  | 'SCHEDULED'
   | 'BOARDING'
   | 'TAXIING'
   | 'DEPARTED'
+  | 'ON_TIME'
+  | 'DELAYED'
   | 'ARRIVED'
   | 'CANCELLED';
+
+export type RecordType = 'HISTORICAL' | 'LIVE_TRACKING';
 
 export type ConflictSeverity = 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -39,17 +42,9 @@ export interface FlightPassengerMetrics {
   tight_connections_at_risk: number;
 }
 
-export interface FlightLocationDetail {
-  iata_code: string;
-  name: string;
-  city: string;
-  terminal?: string;
-  gate?: string;
-  runway?: string;
-}
-
 /**
- * Summary flight entity returned by GET /api/v1/flights
+ * Standard Normalized Flight representation
+ * Supports both docs/api.md and backend/app/schemas/flight.py shapes.
  */
 export interface Flight {
   id: string;
@@ -60,20 +55,57 @@ export interface Flight {
   aircraft_type: string;
   registration: string;
   scheduled_departure: string;
-  estimated_departure: string;
-  actual_departure?: string | null;
   scheduled_arrival: string;
-  estimated_arrival: string;
+  estimated_departure?: string | null;
+  estimated_arrival?: string | null;
+  actual_departure?: string | null;
   actual_arrival?: string | null;
   status: FlightStatus;
-  terminal: string;
-  assigned_gate: string;
-  assigned_runway: string;
+  terminal?: string | null;
+  assigned_gate?: string | null;
+  assigned_runway?: string | null;
   delay_minutes: number;
   delay_reason?: string | null;
-  // Detail extensions available when inspecting a flight
+  record_type: RecordType;
+  data_source: string;
+  // Detail extensions when available
   turnaround?: TurnaroundDetails;
   passengers?: FlightPassengerMetrics;
+}
+
+/**
+ * Raw backend record representation for robust ingestion parsing
+ */
+export interface RawBackendFlightRecord {
+  flight_id?: string;
+  id?: string;
+  flight_number: string;
+  airline?: string;
+  origin_airport?: string;
+  origin?: string;
+  destination_airport?: string;
+  destination?: string;
+  aircraft_type?: string;
+  tail_number?: string | null;
+  registration?: string | null;
+  scheduled_departure: string;
+  scheduled_arrival: string;
+  estimated_departure?: string | null;
+  estimated_arrival?: string | null;
+  actual_departure?: string | null;
+  actual_arrival?: string | null;
+  status?: string;
+  current_status?: string;
+  delay_minutes?: number;
+  current_delay_minutes?: number;
+  delay_reason?: string | null;
+  terminal?: string | null;
+  gate?: string | null;
+  assigned_gate?: string | null;
+  assigned_runway?: string | null;
+  record_type?: string;
+  data_source?: string;
+  active_conflict?: boolean;
 }
 
 /**
@@ -124,14 +156,27 @@ export interface HealthStatus {
 }
 
 /**
+ * Connection states for live API monitoring
+ */
+export type ApiConnectionStatus =
+  | 'CONNECTED_LIVE'
+  | 'NETWORK_ERROR'
+  | 'HTTP_ERROR'
+  | 'INVALID_RESPONSE'
+  | 'OFFLINE_BENCHMARK';
+
+export interface ApiFetchResult<T> {
+  data: T;
+  status: ApiConnectionStatus;
+  httpStatusCode?: number;
+  endpointUrl: string;
+  errorMessage?: string;
+  fetchedAt: string;
+  recordCount: number;
+  isHistoricalDataset: boolean;
+}
+
+/**
  * Data provenance indicator
  */
 export type DataSourceOrigin = 'LIVE' | 'DEMO_FIXTURE' | 'SIMULATED' | 'HISTORICAL';
-
-export interface DataPayloadMeta {
-  source: DataSourceOrigin;
-  fetchedAt: string;
-  isSimulated: boolean;
-  endpointUrl?: string;
-  notes?: string;
-}
