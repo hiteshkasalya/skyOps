@@ -109,6 +109,7 @@ To maintain transparent tracking across teams, the current development status of
 | **FastAPI Core (`backend/app`)** | **Implemented** | Application core, CORS, and health check |
 | **IndiGo Operational Dataset & Ingestion**| **Implemented** | Synthetic IndiGo dataset (DEL, BOM, BLR, CCU, HYD) with Pandas loader |
 | **Flight REST APIs** | **Implemented** | `/flights`, `/flights/{id}` with filtering, pagination headers, and 404/422 handling |
+| **Airport Resources & Schedule Models** | **Implemented** | Airport topology, runway closures, gate compatibility, and turnaround validation |
 | **Database Models & Session** | **Planned / In Development** | SQLAlchemy models for Airport, Gate, Flight |
 | **Gate Conflict Detection** | **Planned / In Development** | Rule-based gate occupancy overlap detector |
 | **Runway-Closure Simulator** | **Planned** | Simulation engine and recovery proposals API |

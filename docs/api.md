@@ -64,9 +64,9 @@ The following matrix documents the exact development status of all defined API c
 | Endpoint | Method | Description | Implementation Status |
 |---|---|---|---|
 | `/api/v1/health` | `GET` | Service & database health status | **Implemented** |
-| `/api/v1/airports` | `GET` | List operational hub airports | **Planned / In Development** |
-| `/api/v1/airports/{code}/runways` | `GET` | Runways and hourly movement capacities | **Planned / In Development** |
-| `/api/v1/airports/{code}/gates` | `GET` | Terminal gates, sizes, and occupancy | **Planned / In Development** |
+| `/api/v1/airports` | `GET` | List operational hub airports | **Implemented** |
+| `/api/v1/airports/{code}/runways` | `GET` | Runways, lengths, and closure windows | **Implemented** |
+| `/api/v1/airports/{code}/gates` | `GET` | Terminal gates, sizes, and compatibility | **Implemented** |
 | `/api/v1/flights` | `GET` | Filterable list of scheduled flights | **Implemented** |
 | `/api/v1/flights/{id}` | `GET` | Full telemetry and turnaround details for a flight | **Implemented** |
 | `/api/v1/conflicts` | `GET` | Active gate and schedule conflicts | **Planned / In Development** |
@@ -105,63 +105,134 @@ The following matrix documents the exact development status of all defined API c
 ## 5. Airport & Resource Management APIs
 
 ### `GET /api/v1/airports`
-- **Status**: Planned / In Development
-- **Description**: Retrieve list of managed airports.
-- **Query Parameters**: `limit` (int, default 50), `offset` (int, default 0)
+- **Status**: Implemented
+- **Description**: Retrieve list of operational hub airports, including their runways, terminals, and gates.
 - **Response `200 OK`**:
   ```json
   [
     {
-      "id": "del-uuid",
-      "iata_code": "DEL",
+      "airport_code": "DEL",
       "icao_code": "VIDP",
       "name": "Indira Gandhi International Airport",
       "city": "New Delhi",
       "country": "India",
       "timezone": "Asia/Kolkata",
-      "active_terminals": ["T1", "T2", "T3"],
-      "active_runways_count": 4
+      "terminals": ["T1", "T2", "T3"],
+      "runways": [
+        {
+          "runway_id": "10/28",
+          "airport_code": "DEL",
+          "length_meters": 3810,
+          "is_active": true,
+          "closure_windows": [
+            {
+              "start_time": "2026-10-12T09:00:00Z",
+              "end_time": "2026-10-12T10:30:00Z",
+              "reason": "SCHEDULED_SWEEPER_MAINTENANCE"
+            }
+          ]
+        }
+      ],
+      "gates": [
+        {
+          "gate_id": "42",
+          "airport_code": "DEL",
+          "terminal": "T3",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ]
     }
   ]
   ```
 
+### `GET /api/v1/airports/{code}`
+- **Status**: Implemented
+- **Description**: Retrieve complete infrastructure topology for a specific airport by IATA code.
+- **Path Parameter**: `code` (e.g. `DEL`)
+- **Response `200 OK`**: Airport object.
+
 ### `GET /api/v1/airports/{code}/runways`
-- **Status**: Planned / In Development
-- **Description**: List runways and operational capacities for a given airport.
+- **Status**: Implemented
+- **Description**: List runways, physical dimensions, and active closure windows for a given airport.
 - **Path Parameter**: `code` (e.g. `DEL`)
 - **Response `200 OK`**:
   ```json
   [
     {
-      "id": "runway-del-10-28",
-      "runway_identifier": "10/28",
+      "runway_id": "10/28",
+      "airport_code": "DEL",
       "length_meters": 3810,
-      "surface_type": "ASPHALT",
-      "status": "OPEN",
-      "current_capacity_movements_per_hour": 35
+      "is_active": true,
+      "closure_windows": [
+        {
+          "start_time": "2026-10-12T09:00:00Z",
+          "end_time": "2026-10-12T10:30:00Z",
+          "reason": "SCHEDULED_SWEEPER_MAINTENANCE"
+        }
+      ]
     }
   ]
   ```
 
 ### `GET /api/v1/airports/{code}/gates`
-- **Status**: Planned / In Development
-- **Description**: Retrieve gate statuses and assignments for an airport terminal.
+- **Status**: Implemented
+- **Description**: Retrieve terminal gates, jetbridge equipment, aircraft size compatibility, and operational status.
 - **Path Parameter**: `code` (e.g. `DEL`)
-- **Query Parameters**: `terminal` (string, optional)
+- **Query Parameters**: `terminal` (string, optional, e.g. `T3`)
 - **Response `200 OK`**:
   ```json
   [
     {
-      "id": "gate-del-t3-42",
-      "gate_number": "42",
+      "gate_id": "42",
+      "airport_code": "DEL",
       "terminal": "T3",
       "max_aircraft_size": "NARROW_BODY",
       "has_jetbridge": true,
-      "status": "OCCUPIED",
-      "current_flight_id": "6E-204"
+      "is_active": true,
+      "closure_windows": []
     }
   ]
   ```
+
+### Airport Resource & Schedule Model Schema Specifications
+
+#### `TimeWindow` (Temporal Interval)
+- `start_time` (ISO 8601 UTC string)
+- `end_time` (ISO 8601 UTC string, validated: `end_time > start_time`)
+
+#### `RunwayOccupancy`
+- `runway_id` (string)
+- `airport_code` (string, 3-letter IATA)
+- `flight_id` (string)
+- `movement_type` (`DEPARTURE` or `ARRIVAL`)
+- `interval` (`TimeWindow`, typically 3 minutes around movement)
+
+#### `GateOccupancy`
+- `gate_id` (string)
+- `airport_code` (string, 3-letter IATA)
+- `flight_id` (string)
+- `interval` (`TimeWindow`, e.g. boarding window prior to departure or deboarding window post arrival)
+
+#### `TurnaroundRequirement`
+- `aircraft_type` (e.g. `A320neo`, `A321neo`)
+- `min_turnaround_minutes` (e.g. 35 mins for A320neo, 45 mins for A321neo)
+- `deboarding_minutes`, `cleaning_minutes`, `fueling_minutes`, `catering_minutes`, `boarding_minutes`
+
+#### `FlightResourceAssignment`
+- `flight_id` (string)
+- `origin_airport` (string)
+- `departure_gate_occupancy` (`GateOccupancy`)
+- `departure_runway_occupancy` (`RunwayOccupancy`)
+- `destination_airport` (string)
+- `arrival_runway_occupancy` (`RunwayOccupancy`)
+- `arrival_gate_occupancy` (`GateOccupancy`)
+- `inbound_flight_id` (string, optional)
+- `turnaround_buffer_minutes` (integer, optional)
+- `turnaround_compliant` (boolean)
+- `is_simulated` (boolean: `true` for simulated operational allocation)
 
 ---
 
@@ -527,6 +598,7 @@ The following matrix documents the exact development status of all defined API c
 
 | Date | Endpoint / Payload | Change Description | Frontend Impact |
 | --- | --- | --- | --- |
+| 2026-10-12 | `GET /api/v1/airports`, `GET /api/v1/airports/{code}/runways`, `GET /api/v1/airports/{code}/gates` | Implemented airport topology, runway closure tracking, gate sizes, and flight resource occupancy assignment schemas. | Exposes operational runways, active closures, and gates with compatibility for interactive map & Gantt visualizers. |
 | 2026-10-12 | `GET /api/v1/flights`, `GET /api/v1/flights/{flight_id}` | Implemented flight listing with filtering, pagination headers (`X-Total-Count`, `X-Limit`, `X-Offset`), flight details, and structured 404/422 responses based on validated flight dataset loader. | Endpoints are now live and callable at `http://127.0.0.1:8000/api/v1/flights`. Provides exact JSON schemas for frontend consume. |
 | 2026-10-12 | Project Contract Establishment | Added detailed schemas for flight list, flight detail (`GET /api/v1/flights/{id}`), and runway closure simulation (`POST /api/v1/simulations/runway-closure`); documented CORS, error format, and status matrix. | Clarifies flight detail card models, simulation payload specs, and confirmed endpoint readiness statuses. |
 | 2026-10-06 | Baseline Contracts | Initial definition of SkyOps REST & WS endpoints | Baseline specifications established |

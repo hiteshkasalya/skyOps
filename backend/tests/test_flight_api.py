@@ -133,3 +133,41 @@ def test_query_validation_errors():
     # Origin code wrong length (> 3)
     res_bad_origin = client.get("/api/v1/flights?origin=DELHI")
     assert res_bad_origin.status_code == 422
+
+
+def test_airports_api_endpoints():
+    """Verify airports, runways, and gates endpoints."""
+    # List airports
+    res = client.get("/api/v1/airports")
+    assert res.status_code == 200
+    airports = res.json()
+    assert len(airports) >= 3
+    airport_codes = [a["airport_code"] for a in airports]
+    assert "DEL" in airport_codes
+    assert "BOM" in airport_codes
+    assert "BLR" in airport_codes
+
+    # Get single airport
+    del_res = client.get("/api/v1/airports/DEL")
+    assert del_res.status_code == 200
+    del_data = del_res.json()
+    assert del_data["airport_code"] == "DEL"
+    assert del_data["icao_code"] == "VIDP"
+    assert len(del_data["runways"]) >= 2
+
+    # Get airport runways
+    rw_res = client.get("/api/v1/airports/DEL/runways")
+    assert rw_res.status_code == 200
+    runways = rw_res.json()
+    assert any(rw["runway_id"] == "10/28" for rw in runways)
+
+    # Get airport gates (with terminal filter)
+    gate_res = client.get("/api/v1/airports/DEL/gates?terminal=T3")
+    assert gate_res.status_code == 200
+    gates = gate_res.json()
+    assert len(gates) >= 3
+    assert all(g["terminal"] == "T3" for g in gates)
+
+    # 404 for non-existent airport
+    not_found = client.get("/api/v1/airports/NONEXISTENT")
+    assert not_found.status_code == 404
