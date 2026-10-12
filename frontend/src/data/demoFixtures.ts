@@ -405,3 +405,69 @@ export const DEMO_HEALTH: HealthStatus = {
     ml_prediction: 'ready',
   },
 };
+
+export const DEMO_RUNWAY_SIMULATION_RESULT = {
+  simulation_id: 'sim-runway-del-1028-20261012',
+  airport_code: 'DEL',
+  runway_identifier: '10/28',
+  closure_window: {
+    start: '2026-10-12T09:00:00Z',
+    end: '2026-10-12T11:30:00Z',
+    duration_minutes: 150,
+  },
+  impact_summary: {
+    capacity_reduction_percentage: 28.5,
+    total_impacted_flights: 18,
+    diverted_flights_count: 2,
+    ground_delayed_departures_count: 12,
+    holding_arrivals_count: 4,
+    total_projected_delay_minutes: 495,
+  },
+  affected_flights: [
+    {
+      flight_id: '6E-6112-DEL-HYD',
+      action_required: 'REROUTE_RUNWAY',
+      original_runway: '10/28',
+      assigned_alternate_runway: '09/27',
+      projected_delay_minutes: 20,
+    },
+    {
+      flight_id: '6E-344-CCU-DEL',
+      action_required: 'HOLD_OR_DIVERT',
+      holding_time_minutes: 25,
+      fuel_status: 'SUFFICIENT',
+    },
+  ],
+  recovery_proposals: [
+    {
+      proposal_id: 'prop-1',
+      title: 'Re-sequence Departures to Runway 09/27',
+      action_type: 'RUNWAY_REDISTRIBUTION',
+      description: 'Shift 8 narrow-body departures from closed Runway 10/28 to Runway 09/27 with 3-minute wake turbulence separation.',
+      estimated_delay_mitigation_minutes: 140,
+    },
+    {
+      proposal_id: 'prop-2',
+      title: 'Ground Delay Program (GDP) for Short-Haul Inbounds',
+      action_type: 'ORIGIN_GROUND_HOLD',
+      description: 'Issue ground stops at origin for BOM and JAI departures bound for DEL to prevent airborne holding stacks.',
+      estimated_delay_mitigation_minutes: 210,
+    },
+  ],
+  conflicts_generated: [
+    {
+      id: 'sim-conflict-rwy-0927-del',
+      type: 'RUNWAY_BUFFER_BREACH',
+      severity: 'HIGH' as const,
+      airport_code: 'DEL',
+      resource_type: 'RUNWAY',
+      resource_id: 'Runway 09/27',
+      conflicting_flight_ids: ['6E-6112-DEL-HYD', '6E-5032-DEL-BLR'],
+      overlap_start: '2026-10-12T09:30:00Z',
+      overlap_end: '2026-10-12T09:35:00Z',
+      description: 'Runway 09/27 departure slot congestion: wake turbulence spacing falls under 3-minute minimum due to redistributed flights.',
+    },
+  ],
+  is_simulated: true,
+  data_source: 'SYNTHETIC_SIMULATION_FIXTURE',
+};

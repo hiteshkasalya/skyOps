@@ -180,3 +180,61 @@ export interface ApiFetchResult<T> {
  * Data provenance indicator
  */
 export type DataSourceOrigin = 'LIVE' | 'DEMO_FIXTURE' | 'SIMULATED' | 'HISTORICAL';
+
+/**
+ * Runway Closure Simulation Request & Response
+ * Strictly conforms to docs/api.md section 8
+ */
+export interface RunwayClosureRequest {
+  airport_code: string;
+  runway_identifier: string;
+  closure_start: string;
+  closure_end: string;
+  reason: string;
+}
+
+export interface AffectedFlight {
+  flight_id: string;
+  action_required: string;
+  original_runway?: string;
+  assigned_alternate_runway?: string;
+  projected_delay_minutes?: number;
+  holding_time_minutes?: number;
+  fuel_status?: string;
+}
+
+export interface RecoveryProposal {
+  proposal_id: string;
+  title: string;
+  action_type: string;
+  description: string;
+  estimated_delay_mitigation_minutes: number;
+}
+
+export interface SimulationClosureWindow {
+  start: string;
+  end: string;
+  duration_minutes: number;
+}
+
+export interface SimulationImpactSummary {
+  capacity_reduction_percentage: number;
+  total_impacted_flights: number;
+  diverted_flights_count: number;
+  ground_delayed_departures_count: number;
+  holding_arrivals_count: number;
+  total_projected_delay_minutes: number;
+}
+
+export interface RunwayClosureSimulationResult {
+  simulation_id: string;
+  airport_code: string;
+  runway_identifier: string;
+  closure_window: SimulationClosureWindow;
+  impact_summary: SimulationImpactSummary;
+  affected_flights: AffectedFlight[];
+  recovery_proposals: RecoveryProposal[];
+  conflicts_generated?: Conflict[];
+  is_simulated: boolean;
+  data_source: string;
+}

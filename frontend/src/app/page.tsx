@@ -7,6 +7,7 @@ import { ActiveConflictsBanner } from '../components/ActiveConflictsBanner';
 import { FlightTable } from '../components/FlightTable';
 import { FlightDetailModal } from '../components/FlightDetailModal';
 import { DataSourceBadge } from '../components/DataSourceBadge';
+import { RunwaySimulationView } from '../components/RunwaySimulationView';
 import { getFlights, getConflicts, getHealth, API_BASE_URL } from '../services/apiClient';
 import { Flight, Conflict, DataSourceOrigin, HealthStatus, ApiConnectionStatus } from '../types/api';
 import {
@@ -215,52 +216,10 @@ export default function DashboardPage() {
 
         {/* Tab 3: Disruption Simulator */}
         {activeTab === 'disruption' && (
-          <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-white">Runway Closure & Tactical Recovery Simulator</h2>
-                    <p className="text-xs text-slate-400">
-                      Evaluates operational impact when airport runways close due to FOD or maintenance (POST /api/v1/simulations/runway-closure).
-                    </p>
-                  </div>
-                </div>
-                <DataSourceBadge source="SIMULATED" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800 text-xs">
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-slate-400 block text-[10px] uppercase">Simulated Incident</span>
-                  <span className="text-base font-bold text-white mt-1 block">DEL Runway 10/28 FOD Inspection</span>
-                  <p className="text-slate-400 mt-1">Duration: 150 minutes (09:00 - 11:30 UTC)</p>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-slate-400 block text-[10px] uppercase">Projected Capacity Impact</span>
-                  <span className="text-base font-bold text-amber-400 mt-1 block">-28.5% Movement Capacity</span>
-                  <p className="text-slate-400 mt-1">18 impacted flights • 12 ground delays • 2 diversions</p>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                  <span className="text-slate-400 block text-[10px] uppercase">Tactical Recovery Strategy</span>
-                  <span className="text-base font-bold text-emerald-400 mt-1 block">Re-sequence to Runway 09/27</span>
-                  <p className="text-slate-400 mt-1">Mitigates ~140 minutes of cumulative passenger delay</p>
-                </div>
-              </div>
-            </div>
-
-            <FlightTable
-              flights={flights}
-              isLoading={isLoading}
-              connectionStatus={connectionStatus}
-              errorMessage={apiErrorMessage}
-              endpointUrl={endpointUrl}
-              onRetry={fetchData}
-              onSelectFlight={(flight) => setSelectedFlight(flight)}
-            />
-          </div>
+          <RunwaySimulationView
+            defaultAirport={currentAirport}
+            dataSourceMode={dataSourceMode}
+          />
         )}
 
         {/* Tab 4: API Contracts */}

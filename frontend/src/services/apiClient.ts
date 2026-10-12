@@ -19,8 +19,16 @@ import {
   ApiFetchResult,
   FlightStatus,
   RecordType,
+  RunwayClosureRequest,
+  RunwayClosureSimulationResult,
 } from '../types/api';
-import { DEMO_FLIGHTS, DEMO_CONFLICTS, DEMO_AIRPORTS, DEMO_HEALTH } from '../data/demoFixtures';
+import {
+  DEMO_FLIGHTS,
+  DEMO_CONFLICTS,
+  DEMO_AIRPORTS,
+  DEMO_HEALTH,
+  DEMO_RUNWAY_SIMULATION_RESULT,
+} from '../data/demoFixtures';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 const REQUEST_TIMEOUT_MS = 2500;
@@ -327,4 +335,133 @@ export async function getHealth(): Promise<HealthStatus> {
  */
 export async function getAirports(): Promise<Airport[]> {
   return DEMO_AIRPORTS;
+}
+
+/**
+ * Execute Runway Closure Simulation
+ * Strictly conforms to docs/api.md section 8: POST /api/v1/simulations/runway-closure
+ * (also supports alias endpoint POST /api/v1/simulation/run)
+ */
+export async function runRunwayClosureSimulation(
+  request: RunwayClosureRequest,
+  mode: 'auto' | 'live_only' | 'mock_only' = 'auto'
+): Promise<ApiFetchResult<RunwayClosureSimulationResult>> {
+  const endpointUrl = `${API_BASE_URL}/simulations/runway-closure`;
+  const now = new Date().toISOString();
+
+  if (mode === 'mock_only') {
+    return {
+      data: {
+        ...DEMO_RUNWAY_SIMULATION_RESULT,
+        airport_code: request.airport_code,
+        runway_identifier: request.runway_identifier,
+        closure_window: {
+          start: request.closure_start,
+          end: request.closure_end,
+          duration_minutes: Math.max(
+            15,
+            Math.round((new Date(request.closure_end).getTime() - new Date(request.closure_start).getTime()) / 60000)
+          ),
+        },
+      },
+      status: 'OFFLINE_BENCHMARK',
+      endpointUrl,
+      fetchedAt: now,
+      recordCount: DEMO_RUNWAY_SIMULATION_RESULT.affected_flights.length,
+      isHistoricalDataset: false,
+    };
+  }
+
+  try {
+    const res = await fetchWithTimeout(endpointUrl, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+
+    if (!res.ok) {
+      let errText = `HTTP ${res.status} ${res.statusText}`;
+      try {
+        const errorJson = await res.json();
+        if (errorJson.message) errText = errorJson.message;
+      } catch {
+        // default
+      }
+
+      if (mode === 'live_only') {
+        return {
+          data: DEMO_RUNWAY_SIMULATION_RESULT,
+          status: 'HTTP_ERROR',
+          httpStatusCode: res.status,
+          endpointUrl,
+          errorMessage: errText,
+          fetchedAt: now,
+          recordCount: 0,
+          isHistoricalDataset: false,
+        };
+      }
+
+      // Auto fallback
+      return {
+        data: {
+          ...DEMO_RUNWAY_SIMULATION_RESULT,
+          airport_code: request.airport_code,
+          runway_identifier: request.runway_identifier,
+        },
+        status: 'OFFLINE_BENCHMARK',
+        endpointUrl,
+        errorMessage: `Backend returned ${errText}. Displaying demonstration simulation projection.`,
+        fetchedAt: now,
+        recordCount: DEMO_RUNWAY_SIMULATION_RESULT.affected_flights.length,
+        isHistoricalDataset: false,
+      };
+    }
+
+    const data: RunwayClosureSimulationResult = await res.json();
+    return {
+      data,
+      status: 'CONNECTED_LIVE',
+      httpStatusCode: 200,
+      endpointUrl,
+      fetchedAt: now,
+      recordCount: data.affected_flights.length,
+      isHistoricalDataset: false,
+    };
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : 'Unknown network failure';
+
+    if (mode === 'live_only') {
+      return {
+        data: DEMO_RUNWAY_SIMULATION_RESULT,
+        status: 'NETWORK_ERROR',
+        endpointUrl,
+        errorMessage: `Unable to connect to FastAPI simulation service at ${endpointUrl}. (${errMsg})`,
+        fetchedAt: now,
+        recordCount: 0,
+        isHistoricalDataset: false,
+      };
+    }
+
+    // Auto mode fallback to verified docs/api.md simulation fixture
+    return {
+      data: {
+        ...DEMO_RUNWAY_SIMULATION_RESULT,
+        airport_code: request.airport_code,
+        runway_identifier: request.runway_identifier,
+        closure_window: {
+          start: request.closure_start,
+          end: request.closure_end,
+          duration_minutes: Math.max(
+            15,
+            Math.round((new Date(request.closure_end).getTime() - new Date(request.closure_start).getTime()) / 60000)
+          ),
+        },
+      },
+      status: 'OFFLINE_BENCHMARK',
+      endpointUrl,
+      errorMessage: `FastAPI simulation service at ${endpointUrl} is offline. Displaying contract demonstration simulation projection.`,
+      fetchedAt: now,
+      recordCount: DEMO_RUNWAY_SIMULATION_RESULT.affected_flights.length,
+      isHistoricalDataset: false,
+    };
+  }
 }
