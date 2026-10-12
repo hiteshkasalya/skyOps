@@ -69,7 +69,8 @@ The following matrix documents the exact development status of all defined API c
 | `/api/v1/airports/{code}/gates` | `GET` | Terminal gates, sizes, and compatibility | **Implemented** |
 | `/api/v1/flights` | `GET` | Filterable list of scheduled flights | **Implemented** |
 | `/api/v1/flights/{id}` | `GET` | Full telemetry and turnaround details for a flight | **Implemented** |
-| `/api/v1/conflicts` | `GET` | Active gate and schedule conflicts | **Planned / In Development** |
+| `/api/v1/conflicts` | `GET` | Active gate, runway closure, reservation, and turnaround conflicts | **Implemented** |
+| `/api/v1/schedules/conflicts` | `GET` | Alias for active operational schedule conflicts | **Implemented** |
 | `/api/v1/simulations/runway-closure` | `POST` | Simulate runway closure impact & recovery proposals | **Planned** |
 | `/api/v1/delays/propagate` | `POST` | Model downstream cascade delays | **Planned** |
 | `/api/v1/optimization/solve-gates` | `POST` | OR-Tools constraint gate re-allocation | **Planned** |
@@ -370,24 +371,67 @@ The following matrix documents the exact development status of all defined API c
 
 ## 7. Conflict Detection APIs
 
-### `GET /api/v1/conflicts`
-- **Status**: Planned / In Development
-- **Description**: Fetch active operational conflicts (gate overlap, turnaround buffer violations).
-- **Query Parameters**: `airport` (string, optional), `severity` (string, optional)
+### `GET /api/v1/conflicts` & `GET /api/v1/schedules/conflicts`
+- **Status**: Implemented
+- **Description**: Deterministically detect active operational resource contentions, runway closure overlaps, runway reservation contentions, gate double-bookings, and insufficient turnaround buffers.
+- **Query Parameters**:
+  - `airport` (string, optional): 3-letter IATA airport code filter (e.g. `DEL`)
+  - `severity` (string, optional): Severity rating (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`)
+  - `type` (string, optional): Conflict classification (`RUNWAY_CLOSURE_CONFLICT`, `RUNWAY_RESERVATION_CONFLICT`, `GATE_OCCUPANCY_CONFLICT`, `INSUFFICIENT_TURNAROUND`, `RESOURCE_UNAVAILABLE`)
+- **Response Headers**:
+  - `X-Total-Count`: Total number of detected conflicts matching filter
 - **Response `200 OK`**:
   ```json
   [
     {
-      "id": "conflict-gate-42-del",
-      "type": "GATE_OCCUPANCY_OVERLAP",
+      "conflict_id": "gate-occupancy-conflict-74c1537b01",
+      "type": "GATE_OCCUPANCY_CONFLICT",
       "severity": "HIGH",
       "airport_code": "DEL",
       "resource_type": "GATE",
-      "resource_id": "Gate 42 (T3)",
-      "conflicting_flight_ids": ["6E-204-DEL-BOM", "6E-5032-DEL-BLR"],
-      "overlap_start": "2026-10-12T08:30:00Z",
-      "overlap_end": "2026-10-12T09:05:00Z",
-      "description": "Flight 6E 204 delayed departure overlaps with scheduled gate arrival for 6E 5032"
+      "resource_id": "Gate 42",
+      "interval": {
+        "start_time": "2026-10-12T07:50:00Z",
+        "end_time": "2026-10-12T08:30:00Z"
+      },
+      "affected_flights": [
+        "6E-204-DEL-BOM-20261012",
+        "6E-5032-DEL-BLR-20261012"
+      ],
+      "explanation": "Gate double-booking contention on Gate 42 at DEL between flights 6E-204-DEL-BOM-20261012 and 6E-5032-DEL-BLR-20261012 overlapping from 07:50 to 08:30 UTC.",
+      "detected_at": "2026-10-12T12:00:00Z"
+    },
+    {
+      "conflict_id": "runway-closure-conflict-32a82df109",
+      "type": "RUNWAY_CLOSURE_CONFLICT",
+      "severity": "CRITICAL",
+      "airport_code": "DEL",
+      "resource_type": "RUNWAY",
+      "resource_id": "10/28",
+      "interval": {
+        "start_time": "2026-10-12T09:13:00Z",
+        "end_time": "2026-10-12T09:16:00Z"
+      },
+      "affected_flights": [
+        "6E-6112-DEL-HYD-20261012"
+      ],
+      "explanation": "Flight 6E 6112 departure runway occupancy (09:13 - 09:16 UTC) overlaps with closure on Runway 10/28 due to 'SCHEDULED_SWEEPER_MAINTENANCE'.",
+      "detected_at": "2026-10-12T12:00:00Z"
+    },
+    {
+      "conflict_id": "insufficient-turnaround-b44c80219f",
+      "type": "INSUFFICIENT_TURNAROUND",
+      "severity": "HIGH",
+      "airport_code": "DEL",
+      "resource_type": "AIRCRAFT_TURNAROUND",
+      "resource_id": "6E-102-BLR-DEL-20261012",
+      "interval": null,
+      "affected_flights": [
+        "6E-102-BLR-DEL-20261012",
+        "6E-204-DEL-BOM-20261012"
+      ],
+      "explanation": "Insufficient turnaround buffer (5 mins available, 45 mins required) at DEL between inbound leg 6E-102-BLR-DEL-20261012 and outbound flight 6E-204-DEL-BOM-20261012.",
+      "detected_at": "2026-10-12T12:00:00Z"
     }
   ]
   ```
@@ -598,6 +642,7 @@ The following matrix documents the exact development status of all defined API c
 
 | Date | Endpoint / Payload | Change Description | Frontend Impact |
 | --- | --- | --- | --- |
+| 2026-10-12 | `GET /api/v1/conflicts`, `GET /api/v1/schedules/conflicts` | Implemented deterministic conflict detection for runway closure overlaps, runway slot contention, gate double-booking, and insufficient turnaround buffers. | Exposes operational contention alerts and explanations for front-end alert banners and Gantt charts. |
 | 2026-10-12 | `GET /api/v1/airports`, `GET /api/v1/airports/{code}/runways`, `GET /api/v1/airports/{code}/gates` | Implemented airport topology, runway closure tracking, gate sizes, and flight resource occupancy assignment schemas. | Exposes operational runways, active closures, and gates with compatibility for interactive map & Gantt visualizers. |
 | 2026-10-12 | `GET /api/v1/flights`, `GET /api/v1/flights/{flight_id}` | Implemented flight listing with filtering, pagination headers (`X-Total-Count`, `X-Limit`, `X-Offset`), flight details, and structured 404/422 responses based on validated flight dataset loader. | Endpoints are now live and callable at `http://127.0.0.1:8000/api/v1/flights`. Provides exact JSON schemas for frontend consume. |
 | 2026-10-12 | Project Contract Establishment | Added detailed schemas for flight list, flight detail (`GET /api/v1/flights/{id}`), and runway closure simulation (`POST /api/v1/simulations/runway-closure`); documented CORS, error format, and status matrix. | Clarifies flight detail card models, simulation payload specs, and confirmed endpoint readiness statuses. |

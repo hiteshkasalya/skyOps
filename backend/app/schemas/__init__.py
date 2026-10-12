@@ -1,6 +1,7 @@
 """Data validation and serialization schemas."""
 from .airport import Airport
 from .common import ErrorResponse
+from .conflict import ConflictSeverity, ConflictType, OperationalConflict
 from .flight import (
     RecordType,
     FlightStatus,
@@ -27,6 +28,8 @@ __all__ = [
     "AircraftCategory",
     "BaseFlightRecord",
     "ClosureWindow",
+    "ConflictSeverity",
+    "ConflictType",
     "ErrorResponse",
     "FlightRecord",
     "FlightResourceAssignment",
@@ -36,6 +39,7 @@ __all__ = [
     "HistoricalFlightRecord",
     "LiveFlightRecord",
     "MovementType",
+    "OperationalConflict",
     "RecordType",
     "Runway",
     "RunwayOccupancy",

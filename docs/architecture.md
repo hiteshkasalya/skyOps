@@ -111,7 +111,7 @@ To maintain transparent tracking across teams, the current development status of
 | **Flight REST APIs** | **Implemented** | `/flights`, `/flights/{id}` with filtering, pagination headers, and 404/422 handling |
 | **Airport Resources & Schedule Models** | **Implemented** | Airport topology, runway closures, gate compatibility, and turnaround validation |
 | **Database Models & Session** | **Planned / In Development** | SQLAlchemy models for Airport, Gate, Flight |
-| **Gate Conflict Detection** | **Planned / In Development** | Rule-based gate occupancy overlap detector |
+| **Conflict Detection Engine** | **Implemented** | Deterministic detector for runway closures, runway overlaps, gate contention, and turnaround breaches |
 | **Runway-Closure Simulator** | **Planned** | Simulation engine and recovery proposals API |
 | **Delay Propagation Modeling** | **Planned** | Cascade delay tree calculation |
 | **OR-Tools Gate Optimization** | **Planned** | Constraint solver integration |
