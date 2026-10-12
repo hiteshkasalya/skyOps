@@ -23,14 +23,14 @@ export const ActiveConflictsBanner: React.FC<ActiveConflictsBannerProps> = ({
   const activeList = conflicts.filter(c => !resolvedIds.includes(c.id));
   if (activeList.length === 0) {
     return (
-      <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-3.5 flex items-center justify-between text-xs text-emerald-300">
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3.5 flex items-center justify-between text-xs text-emerald-800">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>All detected resource conflicts have been mitigated or simulated resolved.</span>
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-medium">All detected resource bottlenecks have been mitigated or simulated resolved.</span>
         </div>
         <button
           onClick={() => setResolvedIds([])}
-          className="underline text-emerald-400 hover:text-emerald-300"
+          className="underline font-semibold text-emerald-700 hover:text-emerald-900 ml-4 shrink-0"
         >
           Reset Simulation
         </button>
@@ -39,31 +39,31 @@ export const ActiveConflictsBanner: React.FC<ActiveConflictsBannerProps> = ({
   }
 
   return (
-    <div className="bg-rose-950/30 border border-rose-500/30 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-rose-200 border-l-4 border-l-rose-600 rounded-lg shadow-sm overflow-hidden">
       <div
-        className="px-4 py-3 flex items-center justify-between cursor-pointer bg-rose-950/40 hover:bg-rose-950/60 transition-colors"
+        className="px-4 py-3 flex items-center justify-between cursor-pointer bg-rose-50/50 hover:bg-rose-50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded bg-rose-100 text-rose-700 shrink-0">
             <AlertTriangle className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-rose-200">
-                {activeList.length} Operational Resource {activeList.length === 1 ? 'Conflict' : 'Conflicts'} Detected
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-bold text-slate-900">
+                {activeList.length} Operational Resource {activeList.length === 1 ? 'Collision' : 'Collisions'} Flagged
               </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                HIGH PRIORITY
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 uppercase tracking-wider">
+                Critical Priority
               </span>
             </div>
-            <p className="text-xs text-rose-300/80 hidden sm:block">
-              Algorithmic collision flagged between scheduled turnaround times and resource allocation
+            <p className="text-xs text-slate-600 hidden sm:block mt-0.5">
+              Spatial or temporal overlap detected across assigned gate occupancy windows
             </p>
           </div>
         </div>
         <button
-          className="text-rose-400 hover:text-rose-300 p-1"
+          className="text-slate-500 hover:text-slate-700 p-1"
           aria-label={isExpanded ? 'Collapse conflicts banner' : 'Expand conflicts banner'}
         >
           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -71,31 +71,32 @@ export const ActiveConflictsBanner: React.FC<ActiveConflictsBannerProps> = ({
       </div>
 
       {isExpanded && (
-        <div className="p-4 space-y-3 border-t border-rose-900/40 divide-y divide-rose-900/20">
+        <div className="p-4 space-y-3 border-t border-rose-100 divide-y divide-slate-100">
           {activeList.map((conflict) => (
             <div key={conflict.id} className="pt-3 first:pt-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-white px-2 py-0.5 rounded bg-slate-900 border border-slate-700">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-mono font-bold text-slate-900 px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
                     {conflict.resource_id}
                   </span>
-                  <span className="text-xs font-semibold text-rose-300">
+                  <span className="text-xs font-bold text-rose-800 uppercase tracking-wide">
                     {conflict.type.replace(/_/g, ' ')}
                   </span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    Overlap: {conflict.overlap_start.slice(11, 16)} - {conflict.overlap_end.slice(11, 16)} UTC
+                  <span className="text-xs text-slate-500 font-mono">
+                    Overlap: {conflict.overlap_start.slice(11, 16)} – {conflict.overlap_end.slice(11, 16)} UTC
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-700 leading-relaxed">
                   {conflict.description}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <span>Impacted flights:</span>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span>Impacted rotations:</span>
                   {conflict.conflicting_flight_ids.map((fid) => (
                     <button
                       key={fid}
                       onClick={() => onSelectConflictFlight && onSelectConflictFlight(fid)}
-                      className="font-mono text-sky-400 hover:text-sky-300 underline text-xs"
+                      className="font-mono text-sky-700 hover:text-sky-900 font-semibold underline text-xs"
+                      title="Inspect flight turnaround detail"
                     >
                       {fid}
                     </button>
@@ -106,11 +107,11 @@ export const ActiveConflictsBanner: React.FC<ActiveConflictsBannerProps> = ({
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => handleSimulateResolve(conflict.id)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium transition-colors shadow-sm"
-                  title="Simulate applying OR-Tools optimization proposal"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-sm"
+                  title="Simulate applying tactical gate re-assignment proposal"
                 >
-                  <Zap className="w-3.5 h-3.5 text-amber-300" />
-                  Simulate Recovery Proposal
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  Simulate Recovery
                 </button>
               </div>
             </div>

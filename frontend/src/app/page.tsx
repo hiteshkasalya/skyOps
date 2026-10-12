@@ -83,7 +83,7 @@ export default function DashboardPage() {
     connectionStatus === 'CONNECTED_LIVE' ? 'LIVE' : 'HISTORICAL';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased">
       {/* Top Header */}
       <Header
         currentAirport={currentAirport}
@@ -96,73 +96,73 @@ export default function DashboardPage() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Navigation Tabs */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <nav className="flex space-x-2" aria-label="Dashboard sections">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5">
+        {/* Navigation Tabs Bar */}
+        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+          <nav className="flex space-x-1.5" aria-label="Dashboard sections">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 activeTab === 'dashboard'
-                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              Operations Dashboard
+              <LayoutDashboard className="w-3.5 h-3.5 text-slate-600" />
+              Operations Overview
             </button>
             <button
               onClick={() => setActiveTab('conflicts')}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 activeTab === 'conflicts'
-                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              Conflicts & Bottlenecks
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+              Resource Conflicts
               {conflicts.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-bold">
+                <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center font-bold">
                   {conflicts.length}
                 </span>
               )}
             </button>
             <button
               onClick={() => setActiveTab('disruption')}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 activeTab === 'disruption'
-                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-sky-800" />
               Disruption Simulator
             </button>
             <button
               onClick={() => setActiveTab('contracts')}
-              className={`hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+              className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 activeTab === 'contracts'
-                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Layers className="w-3.5 h-3.5" />
-              API Contracts
+              <Layers className="w-3.5 h-3.5 text-slate-600" />
+              API Schema & Data
             </button>
           </nav>
 
-          <div className="hidden lg:flex items-center gap-2 text-xs text-slate-400">
+          <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500">
             <span>Operational Hub:</span>
-            <span className="font-semibold text-slate-300">
-              {currentAirport === 'ALL' ? 'Multi-Hub Aggregator' : `${currentAirport} Hub Operations`}
+            <span className="font-semibold text-slate-800 font-mono">
+              {currentAirport === 'ALL' ? 'Multi-Hub Aggregator' : `${currentAirport} Station Dispatch`}
             </span>
           </div>
         </div>
 
         {/* Tab 1: Operations Dashboard */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-6">
-            {/* KPI Cards */}
+          <div className="space-y-5">
+            {/* KPI Cards Strip */}
             <SummaryCards flights={flights} conflicts={conflicts} dataOrigin={currentDataOrigin} />
 
             {/* Active Conflicts Alert Banner */}
@@ -186,14 +186,14 @@ export default function DashboardPage() {
 
         {/* Tab 2: Conflicts View */}
         {activeTab === 'conflicts' && (
-          <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-400" />
+          <div className="space-y-5">
+            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600" />
                 Airport Spatial & Temporal Conflict Registry
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Resource overlaps flagged when turnaround milestones breach assigned gate occupancy windows or runway separation limits.
+              <p className="text-xs text-slate-500 mt-1">
+                Resource overlaps flagged when flight turnaround milestones breach assigned gate occupancy intervals or runway separation buffers.
               </p>
             </div>
 
@@ -224,63 +224,75 @@ export default function DashboardPage() {
 
         {/* Tab 4: API Contracts */}
         {activeTab === 'contracts' && (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-sky-400" />
+                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-sky-800" />
                   Backend API Contract Conformance (docs/api.md)
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Authoritative schema contracts shared with Developer 1 (Backend).
                 </p>
               </div>
-              <span className="text-xs font-mono text-sky-400 px-2 py-1 rounded bg-sky-500/10 border border-sky-500/20">
+              <span className="text-xs font-mono font-bold text-sky-900 px-2 py-0.5 rounded bg-sky-50 border border-sky-200">
                 v1.0 REST + WS
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-              <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                <span className="text-slate-400 font-bold block">Documented Endpoints (docs/api.md)</span>
-                <div className="space-y-1 text-slate-300">
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+                <span className="text-slate-700 font-bold block uppercase tracking-wider text-[11px]">
+                  Documented Endpoints (docs/api.md)
+                </span>
+                <div className="space-y-1.5 text-slate-800">
                   <div className="flex justify-between">
                     <span>GET /api/v1/flights</span>
-                    <span className="text-emerald-400">Connected Client Ready</span>
+                    <span className="text-emerald-700 font-semibold">Active Client</span>
                   </div>
                   <div className="flex justify-between">
                     <span>GET /api/v1/health</span>
-                    <span className="text-emerald-400">Schema Aligned</span>
+                    <span className="text-emerald-700 font-semibold">Schema Aligned</span>
                   </div>
                   <div className="flex justify-between">
                     <span>GET /api/v1/conflicts</span>
-                    <span className="text-emerald-400">Schema Aligned</span>
+                    <span className="text-emerald-700 font-semibold">Schema Aligned</span>
                   </div>
                   <div className="flex justify-between">
                     <span>GET /api/v1/airports</span>
-                    <span className="text-emerald-400">Schema Aligned</span>
+                    <span className="text-emerald-700 font-semibold">Schema Aligned</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>POST /api/v1/simulations/runway-closure</span>
+                    <span className="text-emerald-700 font-semibold">Simulation Ready</span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                <span className="text-slate-400 font-bold block">Dataset & Schema Provenance</span>
-                <div className="space-y-1 text-slate-300">
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+                <span className="text-slate-700 font-bold block uppercase tracking-wider text-[11px]">
+                  Dataset & Telemetry Provenance
+                </span>
+                <div className="space-y-1.5 text-slate-800">
                   <div className="flex justify-between">
-                    <span>Dataset File</span>
-                    <span className="text-sky-300">backend/data/synthetic_...csv</span>
+                    <span>Dataset Origin</span>
+                    <span className="text-slate-700 font-semibold">IndiGo Synthetic Benchmark</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Pydantic Models</span>
-                    <span className="text-sky-300">backend/app/schemas/flight.py</span>
+                    <span>Data Models</span>
+                    <span className="text-slate-700 font-semibold">Pydantic Flight / Conflict</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Record Types</span>
-                    <span className="text-amber-300">HISTORICAL vs LIVE_TRACKING</span>
+                    <span>Record Type Filter</span>
+                    <span className="text-slate-700 font-semibold">HISTORICAL vs LIVE</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Airborne Assumption</span>
-                    <span className="text-emerald-400">Disabled on Historical</span>
+                    <span className="text-emerald-700 font-semibold">Disabled for Historical</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>CORS Origin</span>
+                    <span className="text-slate-700 font-semibold">http://localhost:3000</span>
                   </div>
                 </div>
               </div>
@@ -296,25 +308,25 @@ export default function DashboardPage() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950/80 py-4 text-xs text-slate-500">
+      <footer className="border-t border-slate-200 bg-white py-3.5 text-xs text-slate-500 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span>SkyOps Platform</span>
+            <span className="font-semibold text-slate-700">SkyOps Platform</span>
             <span>•</span>
             <span>Frontend & UI (Developer 2)</span>
             <span>•</span>
-            <span className="text-slate-400">IndiGo Hub Telemetry Demo</span>
+            <span>IndiGo Hub Telemetry Console</span>
           </div>
           <div className="flex items-center gap-2">
             <span
               className={`w-2 h-2 rounded-full ${
-                connectionStatus === 'CONNECTED_LIVE' ? 'bg-emerald-500' : 'bg-amber-500'
+                connectionStatus === 'CONNECTED_LIVE' ? 'bg-emerald-600' : 'bg-amber-500'
               }`}
             />
-            <span className="text-slate-400">
+            <span className="text-slate-600 font-medium">
               {connectionStatus === 'CONNECTED_LIVE'
                 ? 'FastAPI Live Telemetry Connected'
-                : 'Benchmark Dataset Active (FastAPI Server Offline)'}
+                : 'Benchmark Dataset Active (FastAPI Server Standby)'}
             </span>
           </div>
         </div>

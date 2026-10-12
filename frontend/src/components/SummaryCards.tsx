@@ -23,89 +23,105 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ flights, conflicts, 
   const highSeverityConflicts = conflicts.filter(c => c.severity === 'HIGH').length;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* 1. Total Flights */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition-colors">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Total Tracked Flights</span>
-          <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400">
-            <Plane className="w-4 h-4" />
+    <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+        {/* 1. Total Flights */}
+        <div className="p-4 sm:p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Total Flight Movements
+            </span>
+            <Plane className="w-4 h-4 text-slate-400" />
+          </div>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-slate-900">
+              {totalFlights}
+            </span>
+            <span className="text-xs text-slate-500">tracked rotations</span>
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Operational schedule</span>
+            <span className="font-medium text-slate-700">{flights.length > 0 ? 'Active' : 'Standby'}</span>
           </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold tracking-tight text-white">{totalFlights}</span>
-          <span className="text-xs text-slate-400">scheduled / active</span>
-        </div>
-        <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-          <span className="text-slate-400">Hub movements</span>
-          <DataSourceBadge source={dataOrigin} />
-        </div>
-      </div>
 
-      {/* 2. Delayed Flights */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition-colors">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Delayed Flights</span>
-          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
-            <Clock className="w-4 h-4" />
+        {/* 2. Delayed Flights */}
+        <div className="p-4 sm:p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Delayed Departures
+            </span>
+            <Clock className="w-4 h-4 text-amber-500" />
+          </div>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-amber-600">
+              {delayedCount}
+            </span>
+            <span className="text-xs font-semibold text-amber-700 font-mono">
+              {avgDelay > 0 ? `Avg +${avgDelay}m` : 'Nominal'}
+            </span>
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500">Threshold: &gt;15 mins</span>
+            <span className={`font-semibold ${delayedCount > 0 ? 'text-amber-700' : 'text-slate-600'}`}>
+              {delayedCount > 0 ? `${delayedCount} flights impacted` : 'Zero delay'}
+            </span>
           </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold tracking-tight text-amber-400">{delayedCount}</span>
-          <span className="text-xs text-amber-300/80">
-            {avgDelay > 0 ? `Avg +${avgDelay}m delay` : 'No major delays'}
-          </span>
-        </div>
-        <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-          <span className="text-slate-400">{delayedCount > 0 ? 'Requires turnaround pacing' : 'Flow nominal'}</span>
-          <DataSourceBadge source={dataOrigin} />
-        </div>
-      </div>
 
-      {/* 3. On-Time Performance (OTP) */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition-colors">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">On-Time Performance</span>
-          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-            <ShieldCheck className="w-4 h-4" />
+        {/* 3. On-Time Performance (OTP) */}
+        <div className="p-4 sm:p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              On-Time Performance (OTP)
+            </span>
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-emerald-700">
+              {onTimePercentage}%
+            </span>
+            <span className="text-xs text-slate-500">
+              {onTimeCount} of {totalFlights} on-schedule
+            </span>
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center gap-2">
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className={`h-full rounded-full ${onTimePercentage >= 80 ? 'bg-emerald-600' : 'bg-amber-500'}`}
+                style={{ width: `${onTimePercentage}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono shrink-0">Target: 85%</span>
           </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold tracking-tight text-emerald-400">{onTimePercentage}%</span>
-          <span className="text-xs text-slate-400">{onTimeCount} of {totalFlights} on-time</span>
-        </div>
-        <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden mr-2">
-            <div
-              className={`h-full rounded-full ${onTimePercentage >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-              style={{ width: `${onTimePercentage}%` }}
-            />
-          </div>
-          <span className="text-slate-400 text-[10px] whitespace-nowrap">Target: 85%</span>
-        </div>
-      </div>
 
-      {/* 4. Active Conflicts */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition-colors">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Active Conflicts</span>
-          <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400">
-            <AlertTriangle className="w-4 h-4" />
+        {/* 4. Active Conflicts */}
+        <div className="p-4 sm:p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Active Resource Bottlenecks
+            </span>
+            <AlertTriangle className={`w-4 h-4 ${conflicts.length > 0 ? 'text-rose-600' : 'text-slate-400'}`} />
           </div>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className={`text-2xl font-bold tracking-tight ${conflicts.length > 0 ? 'text-rose-400' : 'text-slate-300'}`}>
-            {conflicts.length}
-          </span>
-          <span className="text-xs text-rose-300/80">
-            {highSeverityConflicts > 0 ? `${highSeverityConflicts} high severity` : '0 critical'}
-          </span>
-        </div>
-        <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-          <span className="text-slate-400">Gate & Runway safety</span>
-          <span className="text-xs font-medium text-rose-400">
-            {conflicts.length > 0 ? 'Action required' : 'Clear'}
-          </span>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span
+              className={`text-2xl sm:text-3xl font-bold font-mono tracking-tight ${
+                conflicts.length > 0 ? 'text-rose-600' : 'text-slate-800'
+              }`}
+            >
+              {conflicts.length}
+            </span>
+            <span className="text-xs text-slate-500">
+              {highSeverityConflicts > 0 ? `${highSeverityConflicts} critical overlap` : 'Zero collision'}
+            </span>
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500">Gate & Runway safety</span>
+            <span className={`font-semibold ${conflicts.length > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>
+              {conflicts.length > 0 ? 'Resolution required' : 'Nominal flow'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

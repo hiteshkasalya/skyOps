@@ -14,40 +14,40 @@ export const DataSourceBadge: React.FC<DataSourceBadgeProps> = ({ source, classN
     case 'LIVE':
       return (
         <span
-          className={`inline-flex items-center gap-1.5 font-medium rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 ${sizeClasses} ${className}`}
+          className={`inline-flex items-center gap-1.5 font-semibold rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 ${sizeClasses} ${className}`}
           title="Direct live telemetry feed from FastAPI backend /api/v1"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
           LIVE TELEMETRY
         </span>
       );
     case 'DEMO_FIXTURE':
       return (
         <span
-          className={`inline-flex items-center gap-1.5 font-medium rounded-full bg-sky-950/80 text-sky-300 border border-sky-500/30 ${sizeClasses} ${className}`}
+          className={`inline-flex items-center gap-1.5 font-semibold rounded-md bg-sky-50 text-sky-800 border border-sky-200 ${sizeClasses} ${className}`}
           title="Verified contract fixture matching docs/api.md specifications (Backend server offline)"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-sky-600" />
           DEMO FIXTURE
         </span>
       );
     case 'SIMULATED':
       return (
         <span
-          className={`inline-flex items-center gap-1.5 font-medium rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/30 ${sizeClasses} ${className}`}
+          className={`inline-flex items-center gap-1.5 font-semibold rounded-md bg-amber-50 text-amber-800 border border-amber-200 ${sizeClasses} ${className}`}
           title="Simulated projection produced by disruption recovery or ML engine"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
           SIMULATED
         </span>
       );
     case 'HISTORICAL':
       return (
         <span
-          className={`inline-flex items-center gap-1.5 font-medium rounded-full bg-slate-800 text-slate-300 border border-slate-700 ${sizeClasses} ${className}`}
+          className={`inline-flex items-center gap-1.5 font-semibold rounded-md bg-slate-100 text-slate-700 border border-slate-200 ${sizeClasses} ${className}`}
           title="Historical baseline operational schedule"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
           HISTORICAL
         </span>
       );

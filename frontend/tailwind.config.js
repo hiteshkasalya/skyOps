@@ -20,6 +20,13 @@ module.exports = {
           800: '#075985',
           900: '#0c4a6e',
         },
+        aviation: {
+          navy: '#0f172a',
+          blue: '#0284c7',
+          accent: '#0369a1',
+          surface: '#f8fafc',
+          border: '#e2e8f0',
+        },
       },
     },
   },
