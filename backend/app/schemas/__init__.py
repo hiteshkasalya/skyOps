@@ -1,4 +1,5 @@
 """Data validation and serialization schemas."""
+from .common import ErrorResponse
 from .flight import (
     RecordType,
     FlightStatus,
@@ -9,6 +10,7 @@ from .flight import (
 )
 
 __all__ = [
+    "ErrorResponse",
     "RecordType",
     "FlightStatus",
     "BaseFlightRecord",

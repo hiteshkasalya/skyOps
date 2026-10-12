@@ -63,12 +63,12 @@ The following matrix documents the exact development status of all defined API c
 
 | Endpoint | Method | Description | Implementation Status |
 |---|---|---|---|
-| `/api/v1/health` | `GET` | Service & database health status | **Planned / In Development** |
+| `/api/v1/health` | `GET` | Service & database health status | **Implemented** |
 | `/api/v1/airports` | `GET` | List operational hub airports | **Planned / In Development** |
 | `/api/v1/airports/{code}/runways` | `GET` | Runways and hourly movement capacities | **Planned / In Development** |
 | `/api/v1/airports/{code}/gates` | `GET` | Terminal gates, sizes, and occupancy | **Planned / In Development** |
-| `/api/v1/flights` | `GET` | Filterable list of scheduled flights | **Planned / In Development** |
-| `/api/v1/flights/{id}` | `GET` | Full telemetry and turnaround details for a flight | **Planned / In Development** |
+| `/api/v1/flights` | `GET` | Filterable list of scheduled flights | **Implemented** |
+| `/api/v1/flights/{id}` | `GET` | Full telemetry and turnaround details for a flight | **Implemented** |
 | `/api/v1/conflicts` | `GET` | Active gate and schedule conflicts | **Planned / In Development** |
 | `/api/v1/simulations/runway-closure` | `POST` | Simulate runway closure impact & recovery proposals | **Planned** |
 | `/api/v1/delays/propagate` | `POST` | Model downstream cascade delays | **Planned** |
@@ -82,7 +82,7 @@ The following matrix documents the exact development status of all defined API c
 ## 4. Health & System Endpoints
 
 ### `GET /api/v1/health`
-- **Status**: Planned / In Development
+- **Status**: Implemented
 - **Description**: Returns operational health status of backend services, database connections, and background workers.
 - **Response `200 OK`**:
   ```json
@@ -92,10 +92,10 @@ The following matrix documents the exact development status of all defined API c
     "database": "connected",
     "services": {
       "ingestion": "active",
-      "conflict_detection": "active",
-      "simulation_engine": "ready",
-      "optimization_engine": "ready",
-      "ml_prediction": "ready"
+      "flights_api": "active"
+    },
+    "stats": {
+      "loaded_flights_count": 12
     }
   }
   ```
@@ -168,100 +168,129 @@ The following matrix documents the exact development status of all defined API c
 ## 6. Flight Operations & Schedule APIs
 
 ### `GET /api/v1/flights` (Flight List)
-- **Status**: Planned / In Development
-- **Description**: Fetch live flight schedule with optional filtering.
+- **Status**: Implemented
+- **Description**: Fetch validated flight schedules and telemetry records with filtering and pagination.
 - **Query Parameters**:
   - `origin` (string, optional): 3-letter IATA code (e.g. `DEL`)
   - `destination` (string, optional): 3-letter IATA code (e.g. `BOM`)
-  - `airline` (string, optional): Airline name or code (e.g. `IndiGo`)
-  - `status` (string, optional): `ON_TIME`, `DELAYED`, `BOARDING`, `TAXIING`, `DEPARTED`, `ARRIVED`, `CANCELLED`
-  - `date` (string, optional): `YYYY-MM-DD`
-  - `limit` (int, default 50)
-  - `offset` (int, default 0)
+  - `airline` (string, optional): Airline name or substring (e.g. `IndiGo`)
+  - `status` (string, optional): Operational status (`SCHEDULED`, `BOARDING`, `TAXIING`, `DEPARTED`, `ON_TIME`, `DELAYED`, `ARRIVED`, `CANCELLED`)
+  - `record_type` (string, optional): `HISTORICAL` or `LIVE_TRACKING`
+  - `delayed_only` (boolean, optional, default: `false`): Filter exclusively for flights experiencing positive delay minutes
+  - `limit` (int, default: `50`, min: `1`, max: `100`): Maximum flight records to return
+  - `offset` (int, default: `0`, min: `0`): Pagination offset
+- **Response Headers**:
+  - `X-Total-Count`: Total number of matching flight records
+  - `X-Limit`: Applied limit
+  - `X-Offset`: Applied offset
 - **Response `200 OK`**:
   ```json
   [
     {
-      "id": "6E-204-DEL-BOM",
+      "flight_id": "6E-204-DEL-BOM-20261012",
       "flight_number": "6E 204",
       "airline": "IndiGo",
-      "origin": "DEL",
-      "destination": "BOM",
+      "origin_airport": "DEL",
+      "destination_airport": "BOM",
       "aircraft_type": "A321neo",
-      "registration": "VT-IMG",
+      "tail_number": "VT-IMG",
       "scheduled_departure": "2026-10-12T08:00:00Z",
-      "estimated_departure": "2026-10-12T08:45:00Z",
-      "actual_departure": null,
       "scheduled_arrival": "2026-10-12T10:15:00Z",
-      "estimated_arrival": "2026-10-12T11:00:00Z",
-      "actual_arrival": null,
-      "status": "DELAYED",
       "terminal": "T3",
-      "assigned_gate": "42",
-      "assigned_runway": "10/28",
+      "gate": "42",
+      "record_type": "HISTORICAL",
+      "data_source": "SYNTHETIC_DEMO",
+      "actual_departure": "2026-10-12T08:45:00Z",
+      "actual_arrival": "2026-10-12T11:00:00Z",
+      "status": "DELAYED",
       "delay_minutes": 45,
       "delay_reason": "LATE_INBOUND_AIRCRAFT"
+    },
+    {
+      "flight_id": "6E-5032-DEL-BLR-20261012",
+      "flight_number": "6E 5032",
+      "airline": "IndiGo",
+      "origin_airport": "DEL",
+      "destination_airport": "BLR",
+      "aircraft_type": "A320neo",
+      "tail_number": "VT-IZR",
+      "scheduled_departure": "2026-10-12T08:30:00Z",
+      "scheduled_arrival": "2026-10-12T11:15:00Z",
+      "terminal": "T3",
+      "gate": "42",
+      "record_type": "HISTORICAL",
+      "data_source": "SYNTHETIC_DEMO",
+      "actual_departure": "2026-10-12T08:30:00Z",
+      "actual_arrival": "2026-10-12T11:15:00Z",
+      "status": "ON_TIME",
+      "delay_minutes": 0,
+      "delay_reason": null
     }
   ]
   ```
 
-### `GET /api/v1/flights/{id}` (Flight Detail)
-- **Status**: Planned / In Development
-- **Description**: Fetch detailed operational telemetry, passenger connection metrics, and turnaround milestone tracking for a specific flight.
-- **Path Parameter**: `id` (string, unique flight identifier)
-- **Response `200 OK`**:
+### `GET /api/v1/flights/{flight_id}` (Flight Detail)
+- **Status**: Implemented
+- **Description**: Fetch complete operational flight record by unique composite identifier. Distinguishes historical records from live telemetry tracking records.
+- **Path Parameter**: `flight_id` (string, e.g. `6E-204-DEL-BOM-20261012`)
+- **Response `200 OK` (Historical Record Example)**:
   ```json
   {
-    "id": "6E-204-DEL-BOM",
+    "flight_id": "6E-204-DEL-BOM-20261012",
     "flight_number": "6E 204",
     "airline": "IndiGo",
-    "origin": {
-      "iata_code": "DEL",
-      "name": "Indira Gandhi International Airport",
-      "city": "New Delhi",
-      "terminal": "T3",
-      "gate": "42",
-      "runway": "10/28"
-    },
-    "destination": {
-      "iata_code": "BOM",
-      "name": "Chhatrapati Shivaji Maharaj International Airport",
-      "city": "Mumbai",
-      "terminal": "T2",
-      "gate": "22",
-      "runway": "09/27"
-    },
-    "aircraft": {
-      "type": "A321neo",
-      "registration": "VT-IMG",
-      "capacity": 222,
-      "current_pax_count": 214
-    },
-    "timing": {
-      "scheduled_departure": "2026-10-12T08:00:00Z",
-      "estimated_departure": "2026-10-12T08:45:00Z",
-      "actual_departure": null,
-      "scheduled_arrival": "2026-10-12T10:15:00Z",
-      "estimated_arrival": "2026-10-12T11:00:00Z",
-      "actual_arrival": null,
-      "delay_minutes": 45,
-      "delay_reason": "LATE_INBOUND_AIRCRAFT"
-    },
+    "origin_airport": "DEL",
+    "destination_airport": "BOM",
+    "aircraft_type": "A321neo",
+    "tail_number": "VT-IMG",
+    "scheduled_departure": "2026-10-12T08:00:00Z",
+    "scheduled_arrival": "2026-10-12T10:15:00Z",
+    "terminal": "T3",
+    "gate": "42",
+    "record_type": "HISTORICAL",
+    "data_source": "SYNTHETIC_DEMO",
+    "actual_departure": "2026-10-12T08:45:00Z",
+    "actual_arrival": "2026-10-12T11:00:00Z",
     "status": "DELAYED",
-    "turnaround": {
-      "inbound_flight_id": "6E-102-BLR-DEL",
-      "inbound_arrival_actual": "2026-10-12T07:35:00Z",
-      "deboarding_status": "COMPLETED",
-      "cleaning_status": "IN_PROGRESS",
-      "fueling_status": "PENDING",
-      "catering_status": "IN_PROGRESS",
-      "baggage_loading_status": "PENDING",
-      "boarding_status": "PENDING"
-    },
-    "passengers": {
-      "total": 214,
-      "connecting_passengers": 38,
-      "tight_connections_at_risk": 9
+    "delay_minutes": 45,
+    "delay_reason": "LATE_INBOUND_AIRCRAFT"
+  }
+  ```
+- **Response `200 OK` (Live Telemetry Tracking Record Example)**:
+  ```json
+  {
+    "flight_id": "VALID-03-LIVE",
+    "flight_number": "6E 501",
+    "airline": "IndiGo",
+    "origin_airport": "BLR",
+    "destination_airport": "DEL",
+    "aircraft_type": "A320neo",
+    "tail_number": "VT-LIVE",
+    "scheduled_departure": "2026-10-12T10:00:00Z",
+    "scheduled_arrival": "2026-10-12T12:45:00Z",
+    "terminal": "T1",
+    "gate": "12",
+    "record_type": "LIVE_TRACKING",
+    "data_source": "FIXTURE",
+    "estimated_departure": "2026-10-12T10:20:00Z",
+    "estimated_arrival": "2026-10-12T12:45:00Z",
+    "actual_departure": "2026-10-12T10:20:00Z",
+    "actual_arrival": null,
+    "current_status": "DELAYED",
+    "current_delay_minutes": 20,
+    "active_conflict": false,
+    "last_telemetry_update": "2026-10-12T12:30:00Z"
+  }
+  ```
+- **Response `404 Not Found`**:
+  ```json
+  {
+    "status_code": 404,
+    "error": "Not Found",
+    "message": "Flight with ID 'NON_EXISTENT_FLIGHT_ID' was not found.",
+    "timestamp": "2026-10-12T12:00:00Z",
+    "details": {
+      "path": "/api/v1/flights/NON_EXISTENT_FLIGHT_ID"
     }
   }
   ```
@@ -498,5 +527,6 @@ The following matrix documents the exact development status of all defined API c
 
 | Date | Endpoint / Payload | Change Description | Frontend Impact |
 | --- | --- | --- | --- |
+| 2026-10-12 | `GET /api/v1/flights`, `GET /api/v1/flights/{flight_id}` | Implemented flight listing with filtering, pagination headers (`X-Total-Count`, `X-Limit`, `X-Offset`), flight details, and structured 404/422 responses based on validated flight dataset loader. | Endpoints are now live and callable at `http://127.0.0.1:8000/api/v1/flights`. Provides exact JSON schemas for frontend consume. |
 | 2026-10-12 | Project Contract Establishment | Added detailed schemas for flight list, flight detail (`GET /api/v1/flights/{id}`), and runway closure simulation (`POST /api/v1/simulations/runway-closure`); documented CORS, error format, and status matrix. | Clarifies flight detail card models, simulation payload specs, and confirmed endpoint readiness statuses. |
 | 2026-10-06 | Baseline Contracts | Initial definition of SkyOps REST & WS endpoints | Baseline specifications established |

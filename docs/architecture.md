@@ -106,10 +106,10 @@ To maintain transparent tracking across teams, the current development status of
 |---|---|---|
 | **Architecture & API Contracts** | **Established** | Documented in `docs/architecture.md` and `docs/api.md` |
 | **Developer Guidelines & Git Rules** | **Established** | Documented in `AGENTS.md` |
-| **FastAPI Core (`backend/app`)** | **Planned / In Development** | Base skeleton, CORS, and health check |
+| **FastAPI Core (`backend/app`)** | **Implemented** | Application core, CORS, and health check |
+| **IndiGo Operational Dataset & Ingestion**| **Implemented** | Synthetic IndiGo dataset (DEL, BOM, BLR, CCU, HYD) with Pandas loader |
+| **Flight REST APIs** | **Implemented** | `/flights`, `/flights/{id}` with filtering, pagination headers, and 404/422 handling |
 | **Database Models & Session** | **Planned / In Development** | SQLAlchemy models for Airport, Gate, Flight |
-| **IndiGo Operational Dataset & Seeder**| **Planned / In Development** | Curated hub dataset (DEL, BOM, BLR) with startup seeding |
-| **Flight & Resource APIs** | **Planned / In Development** | `/airports`, `/flights`, `/flights/{id}` |
 | **Gate Conflict Detection** | **Planned / In Development** | Rule-based gate occupancy overlap detector |
 | **Runway-Closure Simulator** | **Planned** | Simulation engine and recovery proposals API |
 | **Delay Propagation Modeling** | **Planned** | Cascade delay tree calculation |

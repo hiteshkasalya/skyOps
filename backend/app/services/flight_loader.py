@@ -84,7 +84,7 @@ class FlightDataLoader:
         if not path.exists():
             raise FileNotFoundError(f"Flight dataset not found at: {path}")
 
-        df = pd.read_csv(path, comment="#", skipinitialspace=True)
+        df = pd.read_csv(path, comment="#", skipinitialspace=True, dtype=str)
         return self.normalize_dataframe(df, default_record_type=record_type)
 
     def normalize_dataframe(
