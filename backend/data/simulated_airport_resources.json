@@ -1,0 +1,286 @@
+{
+  "_metadata": {
+    "data_type": "SIMULATED_OPERATIONAL_DATA",
+    "description": "Simulated airport resources, runway configurations, gate layouts, and turnaround requirements for SkyOps demo.",
+    "is_simulated": true,
+    "last_updated": "2026-10-12T12:00:00Z"
+  },
+  "airports": [
+    {
+      "airport_code": "DEL",
+      "icao_code": "VIDP",
+      "name": "Indira Gandhi International Airport",
+      "city": "New Delhi",
+      "country": "India",
+      "timezone": "Asia/Kolkata",
+      "terminals": ["T1", "T2", "T3"],
+      "runways": [
+        {
+          "runway_id": "10/28",
+          "airport_code": "DEL",
+          "length_meters": 3810,
+          "is_active": true,
+          "closure_windows": [
+            {
+              "start_time": "2026-10-12T09:00:00Z",
+              "end_time": "2026-10-12T10:30:00Z",
+              "reason": "SCHEDULED_SWEEPER_MAINTENANCE"
+            }
+          ]
+        },
+        {
+          "runway_id": "11/29",
+          "airport_code": "DEL",
+          "length_meters": 4430,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "runway_id": "09/27",
+          "airport_code": "DEL",
+          "length_meters": 3810,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ],
+      "gates": [
+        {
+          "gate_id": "41",
+          "airport_code": "DEL",
+          "terminal": "T3",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "42",
+          "airport_code": "DEL",
+          "terminal": "T3",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "46",
+          "airport_code": "DEL",
+          "terminal": "T3",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "18",
+          "airport_code": "DEL",
+          "terminal": "T2",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ]
+    },
+    {
+      "airport_code": "BOM",
+      "icao_code": "VABB",
+      "name": "Chhatrapati Shivaji Maharaj International Airport",
+      "city": "Mumbai",
+      "country": "India",
+      "timezone": "Asia/Kolkata",
+      "terminals": ["T1", "T2"],
+      "runways": [
+        {
+          "runway_id": "09/27",
+          "airport_code": "BOM",
+          "length_meters": 3448,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "runway_id": "14/32",
+          "airport_code": "BOM",
+          "length_meters": 2990,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ],
+      "gates": [
+        {
+          "gate_id": "22",
+          "airport_code": "BOM",
+          "terminal": "T2",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "24",
+          "airport_code": "BOM",
+          "terminal": "T2",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ]
+    },
+    {
+      "airport_code": "BLR",
+      "icao_code": "VOBL",
+      "name": "Kempegowda International Airport",
+      "city": "Bengaluru",
+      "country": "India",
+      "timezone": "Asia/Kolkata",
+      "terminals": ["T1", "T2"],
+      "runways": [
+        {
+          "runway_id": "09L/27R",
+          "airport_code": "BLR",
+          "length_meters": 4000,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "runway_id": "09R/27L",
+          "airport_code": "BLR",
+          "length_meters": 4000,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ],
+      "gates": [
+        {
+          "gate_id": "12",
+          "airport_code": "BLR",
+          "terminal": "T1",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "14",
+          "airport_code": "BLR",
+          "terminal": "T1",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ]
+    },
+    {
+      "airport_code": "HYD",
+      "icao_code": "VOHS",
+      "name": "Rajiv Gandhi International Airport",
+      "city": "Hyderabad",
+      "country": "India",
+      "timezone": "Asia/Kolkata",
+      "terminals": ["T1", "T2"],
+      "runways": [
+        {
+          "runway_id": "09L/27R",
+          "airport_code": "HYD",
+          "length_meters": 4260,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "runway_id": "09R/27L",
+          "airport_code": "HYD",
+          "length_meters": 3707,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ],
+      "gates": [
+        {
+          "gate_id": "08",
+          "airport_code": "HYD",
+          "terminal": "T1",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "18",
+          "airport_code": "HYD",
+          "terminal": "T2",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ]
+    },
+    {
+      "airport_code": "CCU",
+      "icao_code": "VECC",
+      "name": "Netaji Subhash Chandra Bose International Airport",
+      "city": "Kolkata",
+      "country": "India",
+      "timezone": "Asia/Kolkata",
+      "terminals": ["T1", "T2"],
+      "runways": [
+        {
+          "runway_id": "01R/19L",
+          "airport_code": "CCU",
+          "length_meters": 3627,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "runway_id": "01L/19R",
+          "airport_code": "CCU",
+          "length_meters": 2790,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ],
+      "gates": [
+        {
+          "gate_id": "06",
+          "airport_code": "CCU",
+          "terminal": "T1",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        },
+        {
+          "gate_id": "15",
+          "airport_code": "CCU",
+          "terminal": "T2",
+          "max_aircraft_size": "NARROW_BODY",
+          "has_jetbridge": true,
+          "is_active": true,
+          "closure_windows": []
+        }
+      ]
+    }
+  ],
+  "turnaround_requirements": [
+    {
+      "aircraft_type": "A320neo",
+      "min_turnaround_minutes": 35,
+      "deboarding_minutes": 10,
+      "cleaning_minutes": 8,
+      "fueling_minutes": 12,
+      "catering_minutes": 8,
+      "boarding_minutes": 12
+    },
+    {
+      "aircraft_type": "A321neo",
+      "min_turnaround_minutes": 45,
+      "deboarding_minutes": 12,
+      "cleaning_minutes": 10,
+      "fueling_minutes": 15,
+      "catering_minutes": 10,
+      "boarding_minutes": 15
+    }
+  ]
+}
