@@ -6,6 +6,7 @@ import { SummaryCards } from '../components/SummaryCards';
 import { ActiveConflictsBanner } from '../components/ActiveConflictsBanner';
 import { FlightTable } from '../components/FlightTable';
 import { FlightDetailModal } from '../components/FlightDetailModal';
+import { FlightDefectDiagnosisLedger } from '../components/FlightDefectDiagnosisLedger';
 import { DataSourceBadge } from '../components/DataSourceBadge';
 import { RunwaySimulationView } from '../components/RunwaySimulationView';
 import { getFlights, getConflicts, getHealth, API_BASE_URL } from '../services/apiClient';
@@ -22,12 +23,14 @@ import {
   Sparkles,
   Database,
   Radio,
+  Zap,
+  Plane,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [currentAirport, setCurrentAirport] = useState<string>('DEL');
   const [dataSourceMode, setDataSourceMode] = useState<'auto' | 'mock_only' | 'live_only'>('auto');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'conflicts' | 'disruption' | 'contracts'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'conflicts' | 'disruption' | 'diagnosis' | 'contracts'>('dashboard');
 
   const [flights, setFlights] = useState<Flight[]>([]);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
@@ -39,6 +42,8 @@ export default function DashboardPage() {
   const [endpointUrl, setEndpointUrl] = useState<string>(`${API_BASE_URL}/flights`);
 
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+  const [modalInitialTab, setModalInitialTab] = useState<'details' | 'diagnosis'>('details');
+  const [selectedDiagnosisFlightId, setSelectedDiagnosisFlightId] = useState<string>('');
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -72,12 +77,24 @@ export default function DashboardPage() {
     fetchData();
   }, [fetchData]);
 
+  const handleSelectFlight = (flight: Flight, initialTab: 'details' | 'diagnosis' = 'details') => {
+    setSelectedFlight(flight);
+    setModalInitialTab(initialTab);
+  };
+
   const handleSelectConflictFlight = (flightId: string) => {
     const target = flights.find((f) => f.id === flightId);
     if (target) {
       setSelectedFlight(target);
+      setModalInitialTab('diagnosis');
     }
   };
+
+  const currentDiagnosisFlight =
+    flights.find((f) => f.id === selectedDiagnosisFlightId) ||
+    flights.find((f) => f.flight_number === '6E 204') ||
+    flights[0] ||
+    null;
 
   const currentDataOrigin: DataSourceOrigin =
     connectionStatus === 'CONNECTED_LIVE' ? 'LIVE' : 'HISTORICAL';
@@ -139,6 +156,17 @@ export default function DashboardPage() {
               Disruption Simulator
             </button>
             <button
+              onClick={() => setActiveTab('diagnosis')}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                activeTab === 'diagnosis'
+                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              Defect & Recovery Ledger
+            </button>
+            <button
               onClick={() => setActiveTab('contracts')}
               className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 activeTab === 'contracts'
@@ -179,7 +207,7 @@ export default function DashboardPage() {
               errorMessage={apiErrorMessage}
               endpointUrl={endpointUrl}
               onRetry={fetchData}
-              onSelectFlight={(flight) => setSelectedFlight(flight)}
+              onSelectFlight={handleSelectFlight}
             />
           </div>
         )}
@@ -209,7 +237,7 @@ export default function DashboardPage() {
               errorMessage={apiErrorMessage}
               endpointUrl={endpointUrl}
               onRetry={fetchData}
-              onSelectFlight={(flight) => setSelectedFlight(flight)}
+              onSelectFlight={handleSelectFlight}
             />
           </div>
         )}
@@ -222,7 +250,108 @@ export default function DashboardPage() {
           />
         )}
 
-        {/* Tab 4: API Contracts */}
+        {/* Tab 4: Defect Diagnosis & Recovery Ledger */}
+        {activeTab === 'diagnosis' && (
+          <div className="space-y-5">
+            {/* Presentation Header Card */}
+            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-sky-950 text-white rounded-xl p-5 shadow-md border border-slate-700/80">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-400 text-slate-950 uppercase tracking-wider">
+                      Teacher Presentation Mode
+                    </span>
+                    <span className="text-xs text-sky-200 font-mono">
+                      Root Cause Isolation • Cascading Failure Projection • Tactical Schedule Auto-Fix
+                    </span>
+                  </div>
+                  <h2 className="text-lg font-bold mt-1 text-white flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-amber-400 fill-amber-400" />
+                    Automated Flight Defect Diagnosis & Recovery Ledger
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-0.5 max-w-3xl leading-relaxed">
+                    Select any flight to isolate operational defects (inbound delays, gate double-bookings, turnaround compression), 
+                    project downstream failure consequences before they cascade across the airport, and execute an automated tactical recovery with a side-by-side Before vs After audit ledger.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div className="mt-4 pt-3 border-t border-slate-700/80 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-slate-400 font-medium">Quick Demo Profiles:</span>
+                <button
+                  onClick={() => {
+                    const f = flights.find((x) => x.flight_number === '6E 204');
+                    if (f) setSelectedDiagnosisFlightId(f.id);
+                  }}
+                  className={`px-2.5 py-1 rounded text-xs font-semibold font-mono transition-colors border ${
+                    (currentDiagnosisFlight?.flight_number === '6E 204')
+                      ? 'bg-amber-400 text-slate-950 border-amber-400'
+                      : 'bg-slate-800/90 hover:bg-slate-700 text-amber-200 border-amber-500/40'
+                  }`}
+                >
+                  ⚡ 6E 204 (Inbound Delay + Gate 42 Conflict + Turnaround Deficit)
+                </button>
+                <button
+                  onClick={() => {
+                    const f = flights.find((x) => x.flight_number === '6E 801');
+                    if (f) setSelectedDiagnosisFlightId(f.id);
+                  }}
+                  className={`px-2.5 py-1 rounded text-xs font-semibold font-mono transition-colors border ${
+                    (currentDiagnosisFlight?.flight_number === '6E 801')
+                      ? 'bg-amber-400 text-slate-950 border-amber-400'
+                      : 'bg-slate-800/90 hover:bg-slate-700 text-sky-200 border-sky-500/40'
+                  }`}
+                >
+                  6E 801 (Gate 12 Spatial Contention)
+                </button>
+                <button
+                  onClick={() => {
+                    const f = flights.find((x) => x.flight_number === '6E 722');
+                    if (f) setSelectedDiagnosisFlightId(f.id);
+                  }}
+                  className={`px-2.5 py-1 rounded text-xs font-semibold font-mono transition-colors border ${
+                    (currentDiagnosisFlight?.flight_number === '6E 722')
+                      ? 'bg-emerald-400 text-slate-950 border-emerald-400'
+                      : 'bg-slate-800/90 hover:bg-slate-700 text-emerald-200 border-emerald-500/40'
+                  }`}
+                >
+                  6E 722 (Nominal On-Time Control)
+                </button>
+
+                {/* Dropdown for All Flights */}
+                <div className="ml-auto flex items-center gap-1.5">
+                  <label htmlFor="flightSelect" className="text-xs text-slate-400">All Flights:</label>
+                  <select
+                    id="flightSelect"
+                    value={currentDiagnosisFlight?.id || ''}
+                    onChange={(e) => setSelectedDiagnosisFlightId(e.target.value)}
+                    className="bg-slate-800 text-white border border-slate-700 text-xs rounded px-2.5 py-1 font-mono focus:outline-hidden focus:border-sky-400"
+                  >
+                    {flights.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.flight_number} ({f.origin}→{f.destination}) {f.delay_minutes > 0 ? `[+${f.delay_minutes}m]` : '[ON-TIME]'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Diagnosis Component */}
+            {currentDiagnosisFlight ? (
+              <FlightDefectDiagnosisLedger flight={currentDiagnosisFlight} />
+            ) : (
+              <div className="bg-white border border-slate-200 rounded-lg p-8 text-center text-slate-500">
+                <Plane className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                <p className="text-sm font-semibold text-slate-700">No flight selected</p>
+                <p className="text-xs text-slate-500 mt-1">Please pick a flight from the list above to view diagnosis.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 5: API Contracts */}
         {activeTab === 'contracts' && (
           <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -266,6 +395,14 @@ export default function DashboardPage() {
                     <span>POST /api/v1/simulations/runway-closure</span>
                     <span className="text-emerald-700 font-semibold">Simulation Ready</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span>GET /api/v1/flights/:id/diagnosis</span>
+                    <span className="text-emerald-700 font-semibold">Active Client</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>POST /api/v1/flights/:id/simulate-issue</span>
+                    <span className="text-emerald-700 font-semibold">Active Client</span>
+                  </div>
                 </div>
               </div>
 
@@ -304,6 +441,7 @@ export default function DashboardPage() {
       {/* Flight Detail Modal */}
       <FlightDetailModal
         flight={selectedFlight}
+        initialTab={modalInitialTab}
         onClose={() => setSelectedFlight(null)}
       />
 

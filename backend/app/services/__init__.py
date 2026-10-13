@@ -3,6 +3,7 @@ from .conflict_detector import ConflictDetectionService, conflict_detection_serv
 from .flight_loader import FlightDataLoader, IngestionResult
 from .flight_service import FlightService, flight_service
 from .resource_service import ResourceService, resource_service
+from .diagnosis_service import DiagnosisService, diagnosis_service
 
 __all__ = [
     "ConflictDetectionService",
@@ -13,4 +14,6 @@ __all__ = [
     "flight_service",
     "ResourceService",
     "resource_service",
+    "DiagnosisService",
+    "diagnosis_service",
 ]

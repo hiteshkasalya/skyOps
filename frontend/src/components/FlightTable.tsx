@@ -12,6 +12,7 @@ import {
   Radio,
   CheckCircle2,
   XCircle,
+  Zap,
 } from 'lucide-react';
 import { Flight, FlightStatus, ApiConnectionStatus } from '../types/api';
 
@@ -22,7 +23,7 @@ interface FlightTableProps {
   errorMessage?: string;
   endpointUrl: string;
   onRetry: () => void;
-  onSelectFlight: (flight: Flight) => void;
+  onSelectFlight: (flight: Flight, initialTab?: 'details' | 'diagnosis') => void;
 }
 
 const PAGE_SIZE = 8;
@@ -314,7 +315,7 @@ export const FlightTable: React.FC<FlightTableProps> = ({
               {paginatedFlights.map((flight) => (
                 <tr
                   key={flight.id}
-                  onClick={() => onSelectFlight(flight)}
+                  onClick={() => onSelectFlight(flight, 'details')}
                   className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                 >
                   {/* Flight & Airline */}
@@ -407,17 +408,32 @@ export const FlightTable: React.FC<FlightTableProps> = ({
 
                   {/* Inspect Action */}
                   <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectFlight(flight);
-                      }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 transition-colors text-xs font-semibold shadow-2xs"
-                      aria-label={`Inspect flight ${flight.flight_number}`}
-                    >
-                      <span>Details</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      {(flight.delay_minutes > 0 || flight.status === 'DELAYED') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectFlight(flight, 'diagnosis');
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 transition-colors text-xs font-semibold shadow-2xs"
+                          title="Run AI root cause diagnosis & recovery ledger"
+                        >
+                          <Zap className="w-3 h-3 text-amber-600 fill-amber-600" />
+                          <span>Diagnose</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectFlight(flight, 'details');
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 transition-colors text-xs font-semibold shadow-2xs"
+                        aria-label={`Inspect flight ${flight.flight_number}`}
+                      >
+                        <span>Details</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

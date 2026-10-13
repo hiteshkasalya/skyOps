@@ -238,3 +238,82 @@ export interface RunwayClosureSimulationResult {
   is_simulated: boolean;
   data_source: string;
 }
+
+export interface IdentifiedIssue {
+  issue_code: string;
+  title: string;
+  category: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+  root_cause_explanation: string;
+  detected_parameters: Record<string, any>;
+}
+
+export interface PotentialDefect {
+  defect_id: string;
+  title: string;
+  category: string;
+  probability: string;
+  impact_description: string;
+  projected_delay_addition_minutes: number;
+}
+
+export interface TacticalRecoveryAction {
+  step_number: number;
+  action_type: string;
+  title: string;
+  description: string;
+  target_resource: string;
+  mitigated_delay_minutes: number;
+}
+
+export interface StateSnapshot {
+  operational_status: string;
+  total_projected_delay_minutes: number;
+  gate_status: string;
+  runway_status: string;
+  turnaround_buffer_minutes?: number | null;
+  turnaround_compliant: boolean;
+  downstream_flights_impacted: number;
+  passengers_at_risk: number;
+  active_conflicts_count: number;
+}
+
+export interface DeltaSummary {
+  delay_saved_minutes: number;
+  conflicts_eliminated: number;
+  passengers_protected: number;
+  turnaround_buffer_restored_minutes: number;
+  teacher_summary_verdict: string;
+}
+
+export interface BeforeVsAfterComparison {
+  before: StateSnapshot;
+  after: StateSnapshot;
+  delta_summary: DeltaSummary;
+}
+
+export interface FlightDiagnosisResponse {
+  flight_id: string;
+  flight_number: string;
+  airline: string;
+  route: string;
+  origin_airport: string;
+  destination_airport: string;
+  aircraft_type: string;
+  tail_number?: string | null;
+  scheduled_departure: string;
+  scheduled_arrival: string;
+  has_issue: boolean;
+  issue: IdentifiedIssue;
+  potential_defects: PotentialDefect[];
+  recovery_actions: TacticalRecoveryAction[];
+  audit_comparison: BeforeVsAfterComparison;
+  diagnosed_at: string;
+}
+
+export interface InjectedIssueRequest {
+  delay_minutes?: number;
+  delay_reason?: string;
+  blocked_gate?: string;
+  closed_runway?: string;
+}

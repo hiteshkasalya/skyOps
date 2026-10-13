@@ -21,6 +21,8 @@ import {
   RecordType,
   RunwayClosureRequest,
   RunwayClosureSimulationResult,
+  FlightDiagnosisResponse,
+  InjectedIssueRequest,
 } from '../types/api';
 import {
   DEMO_FLIGHTS,
@@ -464,4 +466,46 @@ export async function runRunwayClosureSimulation(
       isHistoricalDataset: false,
     };
   }
+}
+
+/**
+ * Fetch Root Cause Diagnosis, Cascading Defect Projections, and Before/After Audit Ledger for a flight
+ * Conforms to GET /api/v1/flights/{flight_id}/diagnosis
+ */
+export async function getFlightDiagnosis(
+  flightId: string
+): Promise<FlightDiagnosisResponse | null> {
+  const url = `${API_BASE_URL}/flights/${encodeURIComponent(flightId)}/diagnosis`;
+  try {
+    const res = await fetchWithTimeout(url, { method: 'GET' });
+    if (res.ok) {
+      return (await res.json()) as FlightDiagnosisResponse;
+    }
+  } catch (err) {
+    console.warn(`Live diagnosis fetch failed for ${flightId}:`, err);
+  }
+  return null;
+}
+
+/**
+ * Simulate / Inject an operational issue on a flight to view SkyOps automated recovery
+ * Conforms to POST /api/v1/flights/{flight_id}/simulate-issue
+ */
+export async function simulateFlightIssue(
+  flightId: string,
+  request: InjectedIssueRequest
+): Promise<FlightDiagnosisResponse | null> {
+  const url = `${API_BASE_URL}/flights/${encodeURIComponent(flightId)}/simulate-issue`;
+  try {
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+    if (res.ok) {
+      return (await res.json()) as FlightDiagnosisResponse;
+    }
+  } catch (err) {
+    console.warn(`Disruption simulation failed for ${flightId}:`, err);
+  }
+  return null;
 }

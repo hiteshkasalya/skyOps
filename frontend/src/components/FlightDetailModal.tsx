@@ -1,9 +1,11 @@
-import React from 'react';
-import { X, Plane, Clock, MapPin, Users, Fuel, Utensils, Luggage, Sparkles, AlertCircle, Archive, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Plane, Clock, MapPin, Users, Fuel, Utensils, Luggage, Sparkles, AlertCircle, Archive, CheckCircle2, Zap } from 'lucide-react';
 import { Flight, MilestoneStatus } from '../types/api';
+import { FlightDefectDiagnosisLedger } from './FlightDefectDiagnosisLedger';
 
 interface FlightDetailModalProps {
   flight: Flight | null;
+  initialTab?: 'details' | 'diagnosis';
   onClose: () => void;
 }
 
@@ -21,7 +23,13 @@ const MilestoneBadge: React.FC<{ label: string; status?: MilestoneStatus }> = ({
   );
 };
 
-export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({ flight, onClose }) => {
+export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({ flight, initialTab = 'details', onClose }) => {
+  const [modalTab, setModalTab] = useState<'details' | 'diagnosis'>(initialTab);
+
+  useEffect(() => {
+    setModalTab(initialTab);
+  }, [initialTab, flight?.id]);
+
   if (!flight) return null;
 
   const formatTime = (isoString?: string | null) => {
@@ -34,11 +42,11 @@ export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({ flight, on
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
       <div
-        className="bg-white border border-slate-200 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative text-slate-800"
+        className="bg-white border border-slate-200 rounded-xl w-full max-w-4xl max-h-[92vh] overflow-y-auto shadow-2xl relative text-slate-800"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur z-10">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur z-20">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-sky-800 text-white flex items-center justify-center shrink-0">
               <Plane className="w-5 h-5 -rotate-45" />
@@ -76,8 +84,42 @@ export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({ flight, on
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-5 space-y-5">
+        {/* Modal Navigation Tabs */}
+        <div className="flex border-b border-slate-200 px-5 pt-2 bg-slate-50/70 gap-4 sticky top-[73px] bg-slate-50/95 backdrop-blur z-10">
+          <button
+            onClick={() => setModalTab('details')}
+            className={`pb-2.5 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+              modalTab === 'details'
+                ? 'border-sky-800 text-sky-900'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Plane className="w-3.5 h-3.5" />
+            Flight & Turnaround Overview
+          </button>
+          <button
+            onClick={() => setModalTab('diagnosis')}
+            className={`pb-2.5 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+              modalTab === 'diagnosis'
+                ? 'border-amber-600 text-amber-900'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+            <span>⚡ Defect Diagnosis & Recovery Ledger (Teacher Demo)</span>
+            {(flight.delay_minutes > 0 || flight.status === 'DELAYED') && (
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping ml-0.5" />
+            )}
+          </button>
+        </div>
+
+        {modalTab === 'diagnosis' ? (
+          <div className="p-5">
+            <FlightDefectDiagnosisLedger flight={flight} />
+          </div>
+        ) : (
+          /* Body */
+          <div className="p-5 space-y-5">
           {/* Historical Record Notice */}
           {isHistorical && (
             <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5">
@@ -212,6 +254,7 @@ export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({ flight, on
             </div>
           )}
         </div>
+      )}
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">

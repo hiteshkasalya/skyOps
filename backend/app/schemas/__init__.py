@@ -45,4 +45,27 @@ __all__ = [
     "RunwayOccupancy",
     "TimeWindow",
     "TurnaroundRequirement",
+    "DefectSeverity",
+    "DefectCategory",
+    "IdentifiedIssue",
+    "PotentialDefect",
+    "TacticalRecoveryAction",
+    "StateSnapshot",
+    "DeltaSummary",
+    "BeforeVsAfterComparison",
+    "FlightDiagnosisResponse",
+    "InjectedIssueRequest",
 ]
+
+from .diagnosis import (
+    DefectSeverity,
+    DefectCategory,
+    IdentifiedIssue,
+    PotentialDefect,
+    TacticalRecoveryAction,
+    StateSnapshot,
+    DeltaSummary,
+    BeforeVsAfterComparison,
+    FlightDiagnosisResponse,
+    InjectedIssueRequest,
+)
