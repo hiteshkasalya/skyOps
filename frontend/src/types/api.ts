@@ -238,3 +238,221 @@ export interface RunwayClosureSimulationResult {
   is_simulated: boolean;
   data_source: string;
 }
+
+export interface IdentifiedIssue {
+  issue_code: string;
+  title: string;
+  category: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+  root_cause_explanation: string;
+  detected_parameters: Record<string, any>;
+}
+
+export interface PotentialDefect {
+  defect_id: string;
+  title: string;
+  category: string;
+  probability: string;
+  impact_description: string;
+  projected_delay_addition_minutes: number;
+}
+
+export interface TacticalRecoveryAction {
+  step_number: number;
+  action_type: string;
+  title: string;
+  description: string;
+  target_resource: string;
+  mitigated_delay_minutes: number;
+}
+
+export interface StateSnapshot {
+  operational_status: string;
+  total_projected_delay_minutes: number;
+  gate_status: string;
+  runway_status: string;
+  turnaround_buffer_minutes?: number | null;
+  turnaround_compliant: boolean;
+  downstream_flights_impacted: number;
+  passengers_at_risk: number;
+  active_conflicts_count: number;
+}
+
+export interface DeltaSummary {
+  delay_saved_minutes: number;
+  conflicts_eliminated: number;
+  passengers_protected: number;
+  turnaround_buffer_restored_minutes: number;
+  teacher_summary_verdict: string;
+}
+
+export interface BeforeVsAfterComparison {
+  before: StateSnapshot;
+  after: StateSnapshot;
+  delta_summary: DeltaSummary;
+}
+
+export interface FlightDiagnosisResponse {
+  flight_id: string;
+  flight_number: string;
+  airline: string;
+  route: string;
+  origin_airport: string;
+  destination_airport: string;
+  aircraft_type: string;
+  tail_number?: string | null;
+  scheduled_departure: string;
+  scheduled_arrival: string;
+  has_issue: boolean;
+  issue: IdentifiedIssue;
+  potential_defects: PotentialDefect[];
+  recovery_actions: TacticalRecoveryAction[];
+  audit_comparison: BeforeVsAfterComparison;
+  diagnosed_at: string;
+}
+
+export interface InjectedIssueRequest {
+  delay_minutes?: number;
+  delay_reason?: string;
+  blocked_gate?: string;
+  closed_runway?: string;
+}
+
+// ==========================================
+// Advanced Operations Algorithms Types
+// ==========================================
+
+export interface DownstreamFlightImpact {
+  flight_id: string;
+  flight_number: string;
+  route: string;
+  tail_number: string;
+  scheduled_departure: string;
+  projected_departure: string;
+  projected_delay_minutes: number;
+  connection_type: string;
+  absorbed_by_buffer_minutes: number;
+  cascading_penalty_minutes: number;
+  atc_slot_forfeiture: boolean;
+}
+
+export interface CrewDutyImpact {
+  tail_number: string;
+  crew_pairing_id: string;
+  duty_hours_elapsed: number;
+  max_legal_duty_hours: number;
+  duty_breached: boolean;
+  action_required?: string | null;
+}
+
+export interface PassengerImpact {
+  total_connecting_passengers: number;
+  missed_connections_count: number;
+  tight_connections_count: number;
+  rebooking_cost_estimate_inr: number;
+  critical_destinations: string[];
+}
+
+export interface DelayPropagationRequest {
+  flight_id: string;
+  initial_delay_minutes: number;
+  cause?: string;
+  tail_number?: string;
+}
+
+export interface DelayPropagationResponse {
+  root_flight_id: string;
+  root_flight_number: string;
+  root_delay_minutes: number;
+  aircraft_tail: string;
+  total_impacted_flights: number;
+  cascaded_delay_minutes_total: number;
+  downstream_impacts: DownstreamFlightImpact[];
+  crew_duty: CrewDutyImpact;
+  passenger_impact: PassengerImpact;
+  executive_assessment: string;
+  calculated_at: string;
+}
+
+export interface GateReassignment {
+  flight_id: string;
+  flight_number: string;
+  airline: string;
+  aircraft_type: string;
+  original_gate?: string | null;
+  recommended_gate: string;
+  terminal: string;
+  reason: string;
+  delay_mitigated_minutes: number;
+  walking_distance_meters: number;
+  jetbridge_compatible: boolean;
+}
+
+export interface SolverMetrics {
+  solver_algorithm: string;
+  solver_status: string;
+  solve_duration_ms: number;
+  total_conflicts_resolved: number;
+  total_flights_evaluated: number;
+  objective_cost: number;
+  total_passenger_walking_reduction_meters: number;
+}
+
+export interface GateOptimizationRequest {
+  airport_code?: string;
+  time_window_start?: string;
+  time_window_end?: string;
+  prefer_jetbridge?: boolean;
+}
+
+export interface GateOptimizationResponse {
+  airport_code: string;
+  optimized_at: string;
+  solver_status: string;
+  reassignments_count: number;
+  reassignments: GateReassignment[];
+  metrics: SolverMetrics;
+  dispatcher_summary: string;
+}
+
+export interface FeatureAttribution {
+  feature_name: string;
+  feature_category: string;
+  value: string;
+  contribution_minutes: number;
+  percentage_weight: number;
+  description: string;
+}
+
+export interface ConfidenceInterval {
+  p10_optimistic_minutes: number;
+  p50_expected_minutes: number;
+  p90_conservative_minutes: number;
+}
+
+export interface DelayPredictionRequest {
+  flight_number: string;
+  origin: string;
+  destination: string;
+  scheduled_departure: string;
+  aircraft_type?: string;
+  weather_condition?: string;
+  visibility_meters?: number;
+  wind_speed_knots?: number;
+  congestion_level?: string;
+  upstream_delay_minutes?: number;
+}
+
+export interface DelayPredictionResponse {
+  flight_number: string;
+  origin: string;
+  destination: string;
+  predicted_at: string;
+  delay_probability: number;
+  risk_level: string;
+  predicted_delay_minutes: number;
+  confidence_interval: ConfidenceInterval;
+  top_feature_attributions: FeatureAttribution[];
+  ml_model_metadata?: Record<string, string>;
+  operational_recommendation: string;
+}

@@ -24,6 +24,14 @@ import {
   AffectedFlight,
   RecoveryProposal,
   SimulationImpactSummary,
+  FlightDiagnosisResponse,
+  InjectedIssueRequest,
+  DelayPropagationRequest,
+  DelayPropagationResponse,
+  GateOptimizationRequest,
+  GateOptimizationResponse,
+  DelayPredictionRequest,
+  DelayPredictionResponse,
 } from '../types/api';
 import {
   DEMO_FLIGHTS,
@@ -623,4 +631,169 @@ export async function runRunwayClosureSimulation(
       isHistoricalDataset: false,
     };
   }
+}
+
+/**
+ * Fetch Root Cause Diagnosis, Cascading Defect Projections, and Before/After Audit Ledger for a flight
+ * Conforms to GET /api/v1/flights/{flight_id}/diagnosis
+ */
+export async function getFlightDiagnosis(
+  flightId: string
+): Promise<FlightDiagnosisResponse | null> {
+  const url = `${API_BASE_URL}/flights/${encodeURIComponent(flightId)}/diagnosis`;
+  try {
+    const res = await fetchWithTimeout(url, { method: 'GET' });
+    if (res.ok) {
+      return (await res.json()) as FlightDiagnosisResponse;
+    }
+  } catch (err) {
+    console.warn(`Live diagnosis fetch failed for ${flightId}:`, err);
+  }
+  return null;
+}
+
+/**
+ * Simulate / Inject an operational issue on a flight to view SkyOps automated recovery
+ * Conforms to POST /api/v1/flights/{flight_id}/simulate-issue
+ */
+export async function simulateFlightIssue(
+  flightId: string,
+  request: InjectedIssueRequest
+): Promise<FlightDiagnosisResponse | null> {
+  const url = `${API_BASE_URL}/flights/${encodeURIComponent(flightId)}/simulate-issue`;
+  try {
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+    if (res.ok) {
+      return (await res.json()) as FlightDiagnosisResponse;
+    }
+  } catch (err) {
+    console.warn(`Disruption simulation failed for ${flightId}:`, err);
+  }
+  return null;
+}
+
+/**
+ * Compute downstream network cascade delay propagation
+ * Conforms to POST /api/v1/delays/propagate
+ */
+export async function propagateDelay(
+  request: DelayPropagationRequest
+): Promise<DelayPropagationResponse | null> {
+  const url = `${API_BASE_URL}/delays/propagate`;
+  try {
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+    if (res.ok) {
+      return (await res.json()) as DelayPropagationResponse;
+    }
+  } catch (err) {
+    console.warn('Delay propagation API failed:', err);
+  }
+  return null;
+}
+
+/**
+ * Get downstream tail rotation cascade & crew duty projection for a scheduled flight
+ * Conforms to GET /api/v1/delays/{flight_id}/rotation-cascade
+ */
+export async function getFlightRotationCascade(
+  flightId: string
+): Promise<DelayPropagationResponse | null> {
+  const url = `${API_BASE_URL}/delays/${encodeURIComponent(flightId)}/rotation-cascade`;
+  try {
+    const res = await fetchWithTimeout(url, { method: 'GET' });
+    if (res.ok) {
+      return (await res.json()) as DelayPropagationResponse;
+    }
+  } catch (err) {
+    console.warn(`Rotation cascade fetch failed for ${flightId}:`, err);
+  }
+  return null;
+}
+
+/**
+ * Solve Gate Assignment Problem (GAP) under operational disruption
+ * Conforms to POST /api/v1/optimization/solve-gates
+ */
+export async function solveGates(
+  request: GateOptimizationRequest
+): Promise<GateOptimizationResponse | null> {
+  const url = `${API_BASE_URL}/optimization/solve-gates`;
+  try {
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+    if (res.ok) {
+      return (await res.json()) as GateOptimizationResponse;
+    }
+  } catch (err) {
+    console.warn('Gate solver API failed:', err);
+  }
+  return null;
+}
+
+/**
+ * Get optimized gate allocation for an airport hub
+ * Conforms to GET /api/v1/optimization/gates/{airport_code}
+ */
+export async function getHubGateOptimization(
+  airportCode: string
+): Promise<GateOptimizationResponse | null> {
+  const url = `${API_BASE_URL}/optimization/gates/${encodeURIComponent(airportCode)}`;
+  try {
+    const res = await fetchWithTimeout(url, { method: 'GET' });
+    if (res.ok) {
+      return (await res.json()) as GateOptimizationResponse;
+    }
+  } catch (err) {
+    console.warn(`Hub gate optimization fetch failed for ${airportCode}:`, err);
+  }
+  return null;
+}
+
+/**
+ * Run ML flight delay prediction and feature attribution
+ * Conforms to POST /api/v1/predictions/delay
+ */
+export async function predictFlightDelay(
+  request: DelayPredictionRequest
+): Promise<DelayPredictionResponse | null> {
+  const url = `${API_BASE_URL}/predictions/delay`;
+  try {
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+    if (res.ok) {
+      return (await res.json()) as DelayPredictionResponse;
+    }
+  } catch (err) {
+    console.warn('ML delay prediction API failed:', err);
+  }
+  return null;
+}
+
+/**
+ * Get ML delay prediction for an existing flight in the schedule
+ * Conforms to GET /api/v1/predictions/flights/{flight_id}
+ */
+export async function getFlightDelayPrediction(
+  flightId: string
+): Promise<DelayPredictionResponse | null> {
+  const url = `${API_BASE_URL}/predictions/flights/${encodeURIComponent(flightId)}`;
+  try {
+    const res = await fetchWithTimeout(url, { method: 'GET' });
+    if (res.ok) {
+      return (await res.json()) as DelayPredictionResponse;
+    }
+  } catch (err) {
+    console.warn(`Flight delay prediction fetch failed for ${flightId}:`, err);
+  }
+  return null;
 }

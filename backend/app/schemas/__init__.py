@@ -22,6 +22,37 @@ from .resource import (
     TimeWindow,
     TurnaroundRequirement,
 )
+from .diagnosis import (
+    DefectSeverity,
+    DefectCategory,
+    IdentifiedIssue,
+    PotentialDefect,
+    TacticalRecoveryAction,
+    StateSnapshot,
+    DeltaSummary,
+    BeforeVsAfterComparison,
+    FlightDiagnosisResponse,
+    InjectedIssueRequest,
+)
+from .propagation import (
+    DownstreamFlightImpact,
+    CrewDutyImpact,
+    PassengerImpact,
+    DelayPropagationRequest,
+    DelayPropagationResponse,
+)
+from .optimization import (
+    GateReassignment,
+    SolverMetrics,
+    GateOptimizationRequest,
+    GateOptimizationResponse,
+)
+from .prediction import (
+    FeatureAttribution,
+    ConfidenceInterval,
+    DelayPredictionRequest,
+    DelayPredictionResponse,
+)
 
 __all__ = [
     "Airport",
@@ -45,4 +76,27 @@ __all__ = [
     "RunwayOccupancy",
     "TimeWindow",
     "TurnaroundRequirement",
+    "DefectSeverity",
+    "DefectCategory",
+    "IdentifiedIssue",
+    "PotentialDefect",
+    "TacticalRecoveryAction",
+    "StateSnapshot",
+    "DeltaSummary",
+    "BeforeVsAfterComparison",
+    "FlightDiagnosisResponse",
+    "InjectedIssueRequest",
+    "DownstreamFlightImpact",
+    "CrewDutyImpact",
+    "PassengerImpact",
+    "DelayPropagationRequest",
+    "DelayPropagationResponse",
+    "GateReassignment",
+    "SolverMetrics",
+    "GateOptimizationRequest",
+    "GateOptimizationResponse",
+    "FeatureAttribution",
+    "ConfidenceInterval",
+    "DelayPredictionRequest",
+    "DelayPredictionResponse",
 ]

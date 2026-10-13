@@ -95,6 +95,18 @@ class FlightService:
 
         return None
 
+    def get_flight(
+        self, flight_id: str
+    ) -> Optional[Union[HistoricalFlightRecord, LiveFlightRecord, FlightRecord]]:
+        """Convenience alias for get_flight_by_id."""
+        return self.get_flight_by_id(flight_id)
+
+    def list_flights(
+        self,
+    ) -> List[Union[HistoricalFlightRecord, LiveFlightRecord, FlightRecord]]:
+        """Retrieve all currently loaded flight records."""
+        return self._flights
+
 
 # Global singleton instance for application use
 flight_service = FlightService()

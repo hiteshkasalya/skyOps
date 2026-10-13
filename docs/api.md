@@ -69,13 +69,16 @@ The following matrix documents the exact development status of all defined API c
 | `/api/v1/airports/{code}/gates` | `GET` | Terminal gates, sizes, and compatibility | **Implemented** |
 | `/api/v1/flights` | `GET` | Filterable list of scheduled flights | **Implemented** |
 | `/api/v1/flights/{id}` | `GET` | Full telemetry and turnaround details for a flight | **Implemented** |
+| `/api/v1/flights/diagnoses` | `GET` | Multi-flight defect diagnosis, risk projections & recovery ledgers | **Implemented** |
+| `/api/v1/flights/{id}/diagnosis` | `GET` | Root cause diagnosis, cascading defects & tactical recovery ledger | **Implemented** |
+| `/api/v1/flights/{id}/simulate-issue` | `POST` | Inject simulated defect for what-if stress testing (ephemeral) | **Implemented** |
 | `/api/v1/conflicts` | `GET` | Active gate, runway closure, reservation, and turnaround conflicts | **Implemented** |
 | `/api/v1/schedules/conflicts` | `GET` | Alias for active operational schedule conflicts | **Implemented** |
 | `/api/v1/simulation/run` | `POST` | Runway closure disruption simulation & recovery proposals | **Implemented** |
 | `/api/v1/simulations/runway-closure` | `POST` | Alias endpoint for runway closure disruption simulation | **Implemented** |
-| `/api/v1/delays/propagate` | `POST` | Model downstream cascade delays | **Planned** |
-| `/api/v1/optimization/solve-gates` | `POST` | OR-Tools constraint gate re-allocation | **Planned** |
-| `/api/v1/predictions/delay` | `POST` | ML flight delay probability and duration | **Planned** |
+| `/api/v1/delays/propagate` | `POST` | Model downstream cascade delays, crew duty clock & pax flows | **Implemented** |
+| `/api/v1/optimization/solve-gates` | `POST` | OR-Tools / Hungarian constraint gate re-allocation solver | **Implemented** |
+| `/api/v1/predictions/delay` | `POST` | ML flight delay probability and feature attribution (XAI) | **Implemented** |
 | `/api/v1/copilot/chat` | `POST` | GenAI RAG operational assistant | **Planned** |
 | `/ws/v1/live-ops` | `WS` | Real-time operational event stream | **Planned** |
 
@@ -570,10 +573,186 @@ The following matrix documents the exact development status of all defined API c
 
 ---
 
+## 8. Flight Defect Diagnosis, Cascading Risk & Tactical Recovery APIs
+
+### `GET /api/v1/flights/{flight_id}/diagnosis`
+- **Status**: Implemented
+- **Description**: Isolates the primary operational root cause/defect for a specific flight, projects all downstream cascading consequences (gate deadlocks, compressed turnaround buffers, downstream aircraft rotation delays, pax miss-connections, ATC slot expiry), computes tactical recovery actions, and returns an authoritative side-by-side **Before vs After comparison ledger** with net metrics and an executive presentation verdict.
+- **Path Parameter**: `flight_id` (string, e.g. `6E-204-DEL-BOM-20261012`)
+- **Response `200 OK`**:
+  ```json
+  {
+    "flight_id": "6E-204-DEL-BOM-20261012",
+    "flight_number": "6E 204",
+    "airline": "IndiGo",
+    "aircraft_type": "A321neo",
+    "registration": "VT-IMG",
+    "origin": "DEL",
+    "destination": "BOM",
+    "scheduled_departure": "2026-10-12T08:00:00Z",
+    "diagnosed_at": "2026-10-13T12:00:00Z",
+    "has_issue": true,
+    "primary_issue": {
+      "issue_id": "issue-6E-204-DEL-BOM-20261012",
+      "category": "INBOUND_ROTATION_DELAY",
+      "severity": "CRITICAL",
+      "title": "45m Inbound Delay with Gate Contention",
+      "description": "Flight is experiencing 45 minutes of delay attributed to LATE_INBOUND_AIRCRAFT.",
+      "delay_minutes": 45,
+      "delay_reason": "LATE_INBOUND_AIRCRAFT",
+      "detected_conflicts": ["gate-occupancy-conflict-22fb60c79f"]
+    },
+    "potential_defects": [
+      {
+        "defect_id": "defect-gate-deadlock",
+        "category": "GATE_CONFLICT",
+        "title": "Gate 42 Spatial Deadlock & Ramp Standstill",
+        "description": "Prolonged gate occupancy blocks 6E 5032 scheduled at 08:30 UTC, freezing ground handling.",
+        "severity": "CRITICAL",
+        "probability_percent": 95,
+        "cascading_penalty_minutes": 25,
+        "affected_resources": ["Gate 42 (T3)"],
+        "affected_flights": ["6E 5032"]
+      },
+      {
+        "defect_id": "defect-turnaround-deficit",
+        "category": "TURNAROUND_COMPRESSION",
+        "title": "Turnaround Buffer Deficit (-40 min)",
+        "description": "Turnaround compressed to 5 minutes against 45 minutes minimum required standard.",
+        "severity": "HIGH",
+        "probability_percent": 90,
+        "cascading_penalty_minutes": 20,
+        "affected_resources": ["Turnaround Milestones"],
+        "affected_flights": ["6E 204"]
+      },
+      {
+        "defect_id": "defect-rotation-cascade",
+        "category": "ROTATIONAL_CASCADE",
+        "title": "Downstream Tail Rotation Cascade Delay",
+        "description": "Delay cascades directly to downstream flight 6E 205 (BOM → DEL) flown by VT-IMG.",
+        "severity": "HIGH",
+        "probability_percent": 85,
+        "cascading_penalty_minutes": 35,
+        "affected_resources": ["Aircraft VT-IMG"],
+        "affected_flights": ["6E 205"]
+      },
+      {
+        "defect_id": "defect-pax-misconnection",
+        "category": "PASSENGER_MISCONNECTION",
+        "title": "Critical Passenger Connection Disruption",
+        "description": "24 transit passengers risk missing onward international & domestic connections at BOM.",
+        "severity": "MEDIUM",
+        "probability_percent": 75,
+        "cascading_penalty_minutes": 15,
+        "affected_resources": ["Passenger Transit Lounge BOM"],
+        "affected_flights": ["Connecting flights at BOM"]
+      }
+    ],
+    "recovery_actions": [
+      {
+        "action_id": "rec-gate-realloc",
+        "action_type": "GATE_REALLOCATION",
+        "priority_order": 1,
+        "title": "Reallocate Flight to Dedicated Stand 45",
+        "description": "Move flight from contested Gate 42 to Stand 45 to eliminate spatial double-booking.",
+        "assigned_resource": "Gate 45",
+        "mitigated_delay_minutes": 20,
+        "estimated_execution_time_minutes": 5,
+        "status": "PROPOSED"
+      },
+      {
+        "action_id": "rec-fast-track-turnaround",
+        "action_type": "FAST_TRACK_TURNAROUND",
+        "priority_order": 2,
+        "title": "Dispatch Dual-Bridge & Priority Ramp Team",
+        "description": "Execute parallel refueling and dual-door deboarding/boarding to compress turnaround.",
+        "assigned_resource": "Ramp Team Alpha",
+        "mitigated_delay_minutes": 15,
+        "estimated_execution_time_minutes": 25,
+        "status": "PROPOSED"
+      },
+      {
+        "action_id": "rec-slot-resequencing",
+        "action_type": "SLOT_RESEQUENCING",
+        "priority_order": 3,
+        "title": "Coordinate CDM Target Take-Off Slot",
+        "description": "Negotiate updated departure slot with ATC CDM to avoid taxiway holding queue.",
+        "assigned_resource": "Runway 11/29",
+        "mitigated_delay_minutes": 10,
+        "estimated_execution_time_minutes": 3,
+        "status": "PROPOSED"
+      }
+    ],
+    "comparison": {
+      "before": {
+        "status": "DELAYED",
+        "departure_delay_minutes": 45,
+        "gate": "42",
+        "runway": "11/29",
+        "turnaround_duration_minutes": 5,
+        "active_conflicts_count": 2,
+        "cascading_risk_score": 85.0,
+        "projected_downstream_delay_minutes": 95,
+        "pax_misconnections_projected": 24,
+        "defect_summary": "45m delay, Gate 42 contention with 6E 5032, turnaround buffer breach (-40m deficit)"
+      },
+      "after": {
+        "status": "RECOVERED",
+        "departure_delay_minutes": 15,
+        "gate": "Gate 45",
+        "runway": "11/29",
+        "turnaround_duration_minutes": 30,
+        "active_conflicts_count": 0,
+        "cascading_risk_score": 12.0,
+        "projected_downstream_delay_minutes": 10,
+        "pax_misconnections_projected": 0,
+        "defect_summary": "Resolved via Stand 45 re-assignment, fast-track ramp turnaround, and ATC slot re-sequencing."
+      },
+      "delta": {
+        "delay_mitigated_minutes": 30,
+        "conflicts_eliminated": 2,
+        "downstream_delay_saved_minutes": 85,
+        "pax_protected_count": 24,
+        "risk_score_reduction": 73.0,
+        "recovery_feasibility": "FEASIBLE"
+      },
+      "executive_summary": "Automated tactical recovery mitigated 30 minutes of departure delay, eliminated 2 active resource conflicts, and averted 85 minutes of downstream cascading delays across connecting flights.",
+      "presentation_verdict": "TACTICAL INTERVENTION RECOMMENDED: High ROI recovery plan eliminates gate deadlocks and preserves schedule integrity."
+    }
+  }
+  ```
+- **Error Responses**:
+  - `404 Not Found`: Target flight not found in schedule dataset.
+
+### `GET /api/v1/flights/diagnoses`
+- **Status**: Implemented
+- **Description**: Returns a list of defect diagnoses across multiple flights in the operational schedule.
+- **Query Parameters**:
+  - `has_issue_only` (boolean, optional, default: `false`): Filter for flights that currently experience delays, conflicts, or operational defects.
+  - `origin` (string, optional): Airport IATA filter (e.g. `DEL`, `BOM`, `BLR`).
+  - `limit` (integer, default: `50`, min: `1`, max: `100`): Pagination limit.
+- **Response `200 OK`**: Array of `FlightDiagnosisResponse` objects.
+
+### `POST /api/v1/flights/{flight_id}/simulate-issue`
+- **Status**: Implemented
+- **Description**: Injects a simulated defect (e.g. custom delay minutes, delay reason, blocked gate, or closed runway) onto an ephemeral copy of the flight record to evaluate cascading defect projections and the tactical recovery ledger. **Never mutates the live schedule**.
+- **Request Body**:
+  ```json
+  {
+    "delay_minutes": 55,
+    "delay_reason": "LATE_INBOUND_AIRCRAFT",
+    "blocked_gate": "Gate 42",
+    "closed_runway": "10/28"
+  }
+  ```
+- **Response `200 OK`**: Updated `FlightDiagnosisResponse` reflecting the simulated issue and projected recovery delta.
+
+---
+
 ## 9. Delay Propagation & Optimization APIs
 
 ### `POST /api/v1/delays/propagate`
-- **Status**: Planned
+- **Status**: Implemented
 - **Description**: Compute cascade delay impact down the schedule tree for an upstream disruption.
 - **Request Body**:
   ```json
@@ -600,7 +779,7 @@ The following matrix documents the exact development status of all defined API c
   ```
 
 ### `POST /api/v1/optimization/solve-gates`
-- **Status**: Planned
+- **Status**: Implemented
 - **Description**: Run OR-Tools constraint solver to optimize gate re-assignments under disruption.
 - **Request Body**:
   ```json
@@ -631,7 +810,7 @@ The following matrix documents the exact development status of all defined API c
 ## 10. ML Prediction & AI Copilot APIs
 
 ### `POST /api/v1/predictions/delay`
-- **Status**: Planned
+- **Status**: Implemented
 - **Description**: Predict flight delay probability and expected delay duration using ML models.
 - **Request Body**:
   ```json
@@ -704,6 +883,8 @@ The following matrix documents the exact development status of all defined API c
 
 | Date | Endpoint / Payload | Change Description | Frontend Impact |
 | --- | --- | --- | --- |
+| 2026-10-13 | `POST /api/v1/delays/propagate`, `POST /api/v1/optimization/solve-gates`, `POST /api/v1/predictions/delay` | Implemented Network Cascade Delay Propagation, OR-Tools Hungarian Gate Assignment Problem (GAP) Solver, and ML Delay Prediction with Explainable AI (XAI) feature attribution. | Powers the Gate Gantt Matrix visualizer, Aircraft Tail Rotation & Crew Duty clock, and ML Delay Prediction Studio tabs in the frontend dashboard. |
+| 2026-10-13 | `GET /api/v1/flights/{id}/diagnosis`, `GET /api/v1/flights/diagnoses`, `POST /api/v1/flights/{id}/simulate-issue` | Implemented end-to-end flight defect isolation, cascading failure projections, automated tactical recovery, and Before-vs-After audit ledger. | Powers the Defect Diagnosis & Recovery Ledger tab, flight table diagnose button, and teacher demonstration presentation card. |
 | 2026-10-12 | `GET /api/v1/conflicts`, `GET /api/v1/schedules/conflicts` | Implemented deterministic conflict detection for runway closure overlaps, runway slot contention, gate double-booking, and insufficient turnaround buffers. | Exposes operational contention alerts and explanations for front-end alert banners and Gantt charts. |
 | 2026-10-12 | `GET /api/v1/airports`, `GET /api/v1/airports/{code}/runways`, `GET /api/v1/airports/{code}/gates` | Implemented airport topology, runway closure tracking, gate sizes, and flight resource occupancy assignment schemas. | Exposes operational runways, active closures, and gates with compatibility for interactive map & Gantt visualizers. |
 | 2026-10-12 | `GET /api/v1/flights`, `GET /api/v1/flights/{flight_id}` | Implemented flight listing with filtering, pagination headers (`X-Total-Count`, `X-Limit`, `X-Offset`), flight details, and structured 404/422 responses based on validated flight dataset loader. | Endpoints are now live and callable at `http://127.0.0.1:8000/api/v1/flights`. Provides exact JSON schemas for frontend consume. |
