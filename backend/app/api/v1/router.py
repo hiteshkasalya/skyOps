@@ -1,6 +1,16 @@
 """Aggregated API v1 router."""
 from fastapi import APIRouter
-from app.api.v1.endpoints import airports, conflicts, diagnosis, flights, health, simulation
+from app.api.v1.endpoints import (
+    airports,
+    conflicts,
+    diagnosis,
+    flights,
+    health,
+    simulation,
+    propagation,
+    optimization,
+    prediction,
+)
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["Health"])
@@ -11,3 +21,6 @@ api_router.include_router(conflicts.router, prefix="/conflicts", tags=["Conflict
 api_router.include_router(conflicts.router, prefix="/schedules/conflicts", tags=["Conflicts"])
 api_router.include_router(simulation.router, prefix="/simulation", tags=["Simulation"])
 api_router.include_router(simulation.router, prefix="/simulations", tags=["Simulation"])
+api_router.include_router(propagation.router, prefix="/delays", tags=["Delay Propagation"])
+api_router.include_router(optimization.router, prefix="/optimization", tags=["Gate Optimization"])
+api_router.include_router(prediction.router, prefix="/predictions", tags=["ML Predictions"])

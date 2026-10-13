@@ -76,9 +76,9 @@ The following matrix documents the exact development status of all defined API c
 | `/api/v1/schedules/conflicts` | `GET` | Alias for active operational schedule conflicts | **Implemented** |
 | `/api/v1/simulation/run` | `POST` | Runway closure disruption simulation & recovery proposals | **Implemented** |
 | `/api/v1/simulations/runway-closure` | `POST` | Alias endpoint for runway closure disruption simulation | **Implemented** |
-| `/api/v1/delays/propagate` | `POST` | Model downstream cascade delays | **Planned** |
-| `/api/v1/optimization/solve-gates` | `POST` | OR-Tools constraint gate re-allocation | **Planned** |
-| `/api/v1/predictions/delay` | `POST` | ML flight delay probability and duration | **Planned** |
+| `/api/v1/delays/propagate` | `POST` | Model downstream cascade delays, crew duty clock & pax flows | **Implemented** |
+| `/api/v1/optimization/solve-gates` | `POST` | OR-Tools / Hungarian constraint gate re-allocation solver | **Implemented** |
+| `/api/v1/predictions/delay` | `POST` | ML flight delay probability and feature attribution (XAI) | **Implemented** |
 | `/api/v1/copilot/chat` | `POST` | GenAI RAG operational assistant | **Planned** |
 | `/ws/v1/live-ops` | `WS` | Real-time operational event stream | **Planned** |
 
@@ -752,7 +752,7 @@ The following matrix documents the exact development status of all defined API c
 ## 9. Delay Propagation & Optimization APIs
 
 ### `POST /api/v1/delays/propagate`
-- **Status**: Planned
+- **Status**: Implemented
 - **Description**: Compute cascade delay impact down the schedule tree for an upstream disruption.
 - **Request Body**:
   ```json
@@ -779,7 +779,7 @@ The following matrix documents the exact development status of all defined API c
   ```
 
 ### `POST /api/v1/optimization/solve-gates`
-- **Status**: Planned
+- **Status**: Implemented
 - **Description**: Run OR-Tools constraint solver to optimize gate re-assignments under disruption.
 - **Request Body**:
   ```json
@@ -810,7 +810,7 @@ The following matrix documents the exact development status of all defined API c
 ## 10. ML Prediction & AI Copilot APIs
 
 ### `POST /api/v1/predictions/delay`
-- **Status**: Planned
+- **Status**: Implemented
 - **Description**: Predict flight delay probability and expected delay duration using ML models.
 - **Request Body**:
   ```json
@@ -883,6 +883,7 @@ The following matrix documents the exact development status of all defined API c
 
 | Date | Endpoint / Payload | Change Description | Frontend Impact |
 | --- | --- | --- | --- |
+| 2026-10-13 | `POST /api/v1/delays/propagate`, `POST /api/v1/optimization/solve-gates`, `POST /api/v1/predictions/delay` | Implemented Network Cascade Delay Propagation, OR-Tools Hungarian Gate Assignment Problem (GAP) Solver, and ML Delay Prediction with Explainable AI (XAI) feature attribution. | Powers the Gate Gantt Matrix visualizer, Aircraft Tail Rotation & Crew Duty clock, and ML Delay Prediction Studio tabs in the frontend dashboard. |
 | 2026-10-13 | `GET /api/v1/flights/{id}/diagnosis`, `GET /api/v1/flights/diagnoses`, `POST /api/v1/flights/{id}/simulate-issue` | Implemented end-to-end flight defect isolation, cascading failure projections, automated tactical recovery, and Before-vs-After audit ledger. | Powers the Defect Diagnosis & Recovery Ledger tab, flight table diagnose button, and teacher demonstration presentation card. |
 | 2026-10-12 | `GET /api/v1/conflicts`, `GET /api/v1/schedules/conflicts` | Implemented deterministic conflict detection for runway closure overlaps, runway slot contention, gate double-booking, and insufficient turnaround buffers. | Exposes operational contention alerts and explanations for front-end alert banners and Gantt charts. |
 | 2026-10-12 | `GET /api/v1/airports`, `GET /api/v1/airports/{code}/runways`, `GET /api/v1/airports/{code}/gates` | Implemented airport topology, runway closure tracking, gate sizes, and flight resource occupancy assignment schemas. | Exposes operational runways, active closures, and gates with compatibility for interactive map & Gantt visualizers. |

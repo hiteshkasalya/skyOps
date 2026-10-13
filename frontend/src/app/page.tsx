@@ -7,6 +7,9 @@ import { ActiveConflictsBanner } from '../components/ActiveConflictsBanner';
 import { FlightTable } from '../components/FlightTable';
 import { FlightDetailModal } from '../components/FlightDetailModal';
 import { FlightDefectDiagnosisLedger } from '../components/FlightDefectDiagnosisLedger';
+import { GateGanttView } from '../components/GateGanttView';
+import { RotationCascadeView } from '../components/RotationCascadeView';
+import { DelayPredictionView } from '../components/DelayPredictionView';
 import { DataSourceBadge } from '../components/DataSourceBadge';
 import { RunwaySimulationView } from '../components/RunwaySimulationView';
 import { getFlights, getConflicts, getHealth, API_BASE_URL } from '../services/apiClient';
@@ -25,12 +28,17 @@ import {
   Radio,
   Zap,
   Plane,
+  Grid,
+  GitFork,
+  Brain,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [currentAirport, setCurrentAirport] = useState<string>('DEL');
   const [dataSourceMode, setDataSourceMode] = useState<'auto' | 'mock_only' | 'live_only'>('auto');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'conflicts' | 'disruption' | 'diagnosis' | 'contracts'>('dashboard');
+  const [activeTab, setActiveTab] = useState<
+    'dashboard' | 'conflicts' | 'gantt' | 'rotations' | 'predictions' | 'disruption' | 'diagnosis' | 'contracts'
+  >('dashboard');
 
   const [flights, setFlights] = useState<Flight[]>([]);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
@@ -145,15 +153,37 @@ export default function DashboardPage() {
               )}
             </button>
             <button
-              onClick={() => setActiveTab('disruption')}
+              onClick={() => setActiveTab('gantt')}
               className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                activeTab === 'disruption'
+                activeTab === 'gantt'
                   ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-sky-800" />
-              Disruption Simulator
+              <Grid className="w-3.5 h-3.5 text-indigo-700" />
+              Gate Gantt Matrix
+            </button>
+            <button
+              onClick={() => setActiveTab('rotations')}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                activeTab === 'rotations'
+                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <GitFork className="w-3.5 h-3.5 text-amber-600" />
+              Tail Rotation & Crew
+            </button>
+            <button
+              onClick={() => setActiveTab('predictions')}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                activeTab === 'predictions'
+                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Brain className="w-3.5 h-3.5 text-violet-700" />
+              ML Delay Studio
             </button>
             <button
               onClick={() => setActiveTab('diagnosis')}
@@ -165,6 +195,17 @@ export default function DashboardPage() {
             >
               <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
               Defect & Recovery Ledger
+            </button>
+            <button
+              onClick={() => setActiveTab('disruption')}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                activeTab === 'disruption'
+                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-sky-800" />
+              Disruption Simulator
             </button>
             <button
               onClick={() => setActiveTab('contracts')}
@@ -242,7 +283,33 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Tab 3: Disruption Simulator */}
+        {/* Tab: Gate Gantt Matrix */}
+        {activeTab === 'gantt' && (
+          <GateGanttView
+            flights={flights}
+            defaultAirport={currentAirport}
+            onSelectFlight={handleSelectFlight}
+          />
+        )}
+
+        {/* Tab: Aircraft Tail Rotation & Crew Cascade */}
+        {activeTab === 'rotations' && (
+          <RotationCascadeView
+            flights={flights}
+            selectedFlight={selectedFlight}
+            onSelectFlight={handleSelectFlight}
+          />
+        )}
+
+        {/* Tab: ML Delay Prediction Studio */}
+        {activeTab === 'predictions' && (
+          <DelayPredictionView
+            flights={flights}
+            selectedFlight={selectedFlight}
+          />
+        )}
+
+        {/* Tab: Disruption Simulator */}
         {activeTab === 'disruption' && (
           <RunwaySimulationView
             defaultAirport={currentAirport}
@@ -401,6 +468,18 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>POST /api/v1/flights/:id/simulate-issue</span>
+                    <span className="text-emerald-700 font-semibold">Active Client</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>POST /api/v1/delays/propagate</span>
+                    <span className="text-emerald-700 font-semibold">Active Client</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>POST /api/v1/optimization/solve-gates</span>
+                    <span className="text-emerald-700 font-semibold">Active Client</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>POST /api/v1/predictions/delay</span>
                     <span className="text-emerald-700 font-semibold">Active Client</span>
                   </div>
                 </div>
