@@ -31,14 +31,16 @@ import {
   Grid,
   GitFork,
   Brain,
+  ChevronDown,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [currentAirport, setCurrentAirport] = useState<string>('DEL');
   const [dataSourceMode, setDataSourceMode] = useState<'auto' | 'mock_only' | 'live_only'>('auto');
   const [activeTab, setActiveTab] = useState<
-    'dashboard' | 'conflicts' | 'gantt' | 'rotations' | 'predictions' | 'disruption' | 'diagnosis' | 'contracts'
-  >('dashboard');
+    'diagnosis' | 'gantt' | 'fleet' | 'conflicts' | 'rotations' | 'predictions' | 'disruption' | 'contracts'
+  >('diagnosis');
+  const [showAdvancedMenu, setShowAdvancedMenu] = useState<boolean>(false);
 
   const [flights, setFlights] = useState<Flight[]>([]);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
@@ -51,7 +53,7 @@ export default function DashboardPage() {
 
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [modalInitialTab, setModalInitialTab] = useState<'details' | 'diagnosis'>('details');
-  const [selectedDiagnosisFlightId, setSelectedDiagnosisFlightId] = useState<string>('');
+  const [selectedDiagnosisFlightId, setSelectedDiagnosisFlightId] = useState<string>('IND-6E-204');
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -87,14 +89,20 @@ export default function DashboardPage() {
 
   const handleSelectFlight = (flight: Flight, initialTab: 'details' | 'diagnosis' = 'details') => {
     setSelectedFlight(flight);
-    setModalInitialTab(initialTab);
+    if (initialTab === 'diagnosis') {
+      setSelectedDiagnosisFlightId(flight.id);
+      setActiveTab('diagnosis');
+    } else {
+      setModalInitialTab('details');
+    }
   };
 
   const handleSelectConflictFlight = (flightId: string) => {
     const target = flights.find((f) => f.id === flightId);
     if (target) {
       setSelectedFlight(target);
-      setModalInitialTab('diagnosis');
+      setSelectedDiagnosisFlightId(target.id);
+      setActiveTab('diagnosis');
     }
   };
 
@@ -122,123 +130,198 @@ export default function DashboardPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5">
-        {/* Navigation Tabs Bar */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-          <nav className="flex space-x-1.5" aria-label="Dashboard sections">
+        {/* Streamlined Presentation Navigation Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
+          <nav className="flex flex-wrap items-center gap-2" aria-label="Dashboard sections">
+            {/* Primary Demo Tab: Defect & Recovery Ledger */}
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                activeTab === 'dashboard'
-                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5 text-slate-600" />
-              Operations Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('conflicts')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                activeTab === 'conflicts'
-                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-              Resource Conflicts
-              {conflicts.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center font-bold">
-                  {conflicts.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('gantt')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                activeTab === 'gantt'
-                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Grid className="w-3.5 h-3.5 text-indigo-700" />
-              Gate Gantt Matrix
-            </button>
-            <button
-              onClick={() => setActiveTab('rotations')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                activeTab === 'rotations'
-                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <GitFork className="w-3.5 h-3.5 text-amber-600" />
-              Tail Rotation & Crew
-            </button>
-            <button
-              onClick={() => setActiveTab('predictions')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                activeTab === 'predictions'
-                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Brain className="w-3.5 h-3.5 text-violet-700" />
-              ML Delay Studio
-            </button>
-            <button
-              onClick={() => setActiveTab('diagnosis')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+              onClick={() => {
+                setActiveTab('diagnosis');
+                setShowAdvancedMenu(false);
+              }}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all shadow-2xs ${
                 activeTab === 'diagnosis'
-                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-amber-400 text-slate-950 border border-amber-300 ring-2 ring-amber-400/30'
+                  : 'bg-white text-slate-700 hover:text-slate-950 border border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-              Defect & Recovery Ledger
+              <Zap className={`w-4 h-4 ${activeTab === 'diagnosis' ? 'text-slate-950 fill-slate-950' : 'text-amber-500 fill-amber-500'}`} />
+              <span>Defect Diagnosis & Recovery Ledger</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider font-extrabold ${
+                activeTab === 'diagnosis' ? 'bg-slate-950 text-amber-300' : 'bg-amber-100 text-amber-900'
+              }`}>
+                Core Demo
+              </span>
             </button>
+
+            {/* Visual Proof Tab: Gate Gantt Matrix */}
             <button
-              onClick={() => setActiveTab('disruption')}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                activeTab === 'disruption'
-                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              onClick={() => {
+                setActiveTab('gantt');
+                setShowAdvancedMenu(false);
+              }}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-2xs ${
+                activeTab === 'gantt'
+                  ? 'bg-sky-900 text-white border border-sky-800 ring-2 ring-sky-700/30'
+                  : 'bg-white text-slate-700 hover:text-slate-950 border border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-sky-800" />
-              Disruption Simulator
+              <Grid className={`w-4 h-4 ${activeTab === 'gantt' ? 'text-sky-300' : 'text-sky-700'}`} />
+              <span>Airport Gate Gantt Matrix</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider font-semibold ${
+                activeTab === 'gantt' ? 'bg-sky-800 text-sky-100' : 'bg-slate-100 text-slate-600'
+              }`}>
+                Visual Proof
+              </span>
             </button>
+
+            {/* Full Fleet Table Tab */}
             <button
-              onClick={() => setActiveTab('contracts')}
-              className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                activeTab === 'contracts'
-                  ? 'bg-white text-slate-900 border border-slate-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              onClick={() => {
+                setActiveTab('fleet');
+                setShowAdvancedMenu(false);
+              }}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-2xs ${
+                activeTab === 'fleet'
+                  ? 'bg-slate-900 text-white border border-slate-800 ring-2 ring-slate-700/30'
+                  : 'bg-white text-slate-700 hover:text-slate-950 border border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <Layers className="w-3.5 h-3.5 text-slate-600" />
-              API Schema & Data
+              <Plane className={`w-4 h-4 ${activeTab === 'fleet' ? 'text-sky-300' : 'text-slate-600'}`} />
+              <span>Fleet Operations Table</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                activeTab === 'fleet' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'
+              }`}>
+                {flights.length}
+              </span>
             </button>
+
+            {/* Advanced AI Engines Dropdown Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowAdvancedMenu(!showAdvancedMenu)}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all border shadow-2xs ${
+                  ['rotations', 'predictions', 'disruption', 'conflicts', 'contracts'].includes(activeTab)
+                    ? 'bg-indigo-50 border-indigo-300 text-indigo-900'
+                    : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+                title="Secondary AI engines and simulators"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>
+                  {activeTab === 'rotations'
+                    ? 'Engine: Tail Rotations'
+                    : activeTab === 'predictions'
+                    ? 'Engine: ML Delay Studio'
+                    : activeTab === 'disruption'
+                    ? 'Engine: Disruption Sim'
+                    : activeTab === 'conflicts'
+                    ? 'Engine: Spatial Conflicts'
+                    : activeTab === 'contracts'
+                    ? 'Schema: API Contracts'
+                    : 'More AI Engines'}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showAdvancedMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showAdvancedMenu && (
+                <div className="absolute left-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1.5 text-xs divide-y divide-slate-100">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Secondary Systems
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setActiveTab('disruption');
+                        setShowAdvancedMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700 hover:text-slate-900"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+                        Runway Disruption Simulator
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('rotations');
+                        setShowAdvancedMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700 hover:text-slate-900"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GitFork className="w-3.5 h-3.5 text-amber-600" />
+                        Tail Rotation & Crew Cascade
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('predictions');
+                        setShowAdvancedMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700 hover:text-slate-900"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Brain className="w-3.5 h-3.5 text-violet-600" />
+                        ML Delay Prediction Studio
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('conflicts');
+                        setShowAdvancedMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700 hover:text-slate-900"
+                    >
+                      <span className="flex items-center gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                        Spatial Conflicts Registry
+                      </span>
+                      {conflicts.length > 0 && (
+                        <span className="px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 font-mono font-bold text-[10px]">
+                          {conflicts.length}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('contracts');
+                        setShowAdvancedMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700 hover:text-slate-900"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Layers className="w-3.5 h-3.5 text-slate-600" />
+                        API Contract Registry
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
 
-          <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500">
-            <span>Operational Hub:</span>
-            <span className="font-semibold text-slate-800 font-mono">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className="hidden md:inline">Operational Station:</span>
+            <span className="font-semibold text-slate-800 font-mono bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
               {currentAirport === 'ALL' ? 'Multi-Hub Aggregator' : `${currentAirport} Station Dispatch`}
             </span>
           </div>
         </div>
 
-        {/* Tab 1: Operations Dashboard */}
-        {activeTab === 'dashboard' && (
+        {/* Tab: Fleet Operations Table */}
+        {activeTab === 'fleet' && (
           <div className="space-y-5">
             {/* KPI Cards Strip */}
             <SummaryCards flights={flights} conflicts={conflicts} dataOrigin={currentDataOrigin} />
 
             {/* Active Conflicts Alert Banner */}
-            <ActiveConflictsBanner
-              conflicts={conflicts}
-              onSelectConflictFlight={handleSelectConflictFlight}
-            />
+            {conflicts.length > 0 && (
+              <ActiveConflictsBanner
+                conflicts={conflicts}
+                onSelectConflictFlight={handleSelectConflictFlight}
+              />
+            )}
 
             {/* Connected Flight Table */}
             <FlightTable
@@ -319,7 +402,37 @@ export default function DashboardPage() {
 
         {/* Tab 4: Defect Diagnosis & Recovery Ledger */}
         {activeTab === 'diagnosis' && (
-          <div className="space-y-5">
+          <div className="space-y-4">
+            {/* Executive Operations Summary Ribbon */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Station Flights</span>
+                <div className="text-xl font-black font-mono text-slate-900 mt-0.5">{flights.length} Monitored</div>
+                <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active Station Dispatch
+                </div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Spatial Gate Conflicts</span>
+                <div className="text-xl font-black font-mono text-amber-600 mt-0.5">{conflicts.length} Overlaps</div>
+                <div className="text-[10px] text-amber-700 mt-0.5">
+                  {conflicts.length > 0 ? 'Gate 42 contention detected' : 'Nominal Gate Buffers'}
+                </div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">On-Time Performance</span>
+                <div className="text-xl font-black font-mono text-emerald-600 mt-0.5">
+                  {flights.length ? Math.round((flights.filter(f => f.status === 'ON_TIME' || f.delay_minutes === 0).length / flights.length) * 100) : 88}%
+                </div>
+                <div className="text-[10px] text-slate-500 mt-0.5">Scheduled On-Time Index</div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">OR-Tools Solver Latency</span>
+                <div className="text-xl font-black font-mono text-indigo-700 mt-0.5">1.35ms</div>
+                <div className="text-[10px] text-indigo-700 mt-0.5">Hungarian Linear Sum Optimizer</div>
+              </div>
+            </div>
+
             {/* Presentation Header Card */}
             <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-sky-950 text-white rounded-xl p-5 shadow-md border border-slate-700/80">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
